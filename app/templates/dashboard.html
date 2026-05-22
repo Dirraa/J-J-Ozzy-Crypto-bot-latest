@@ -2012,8 +2012,12 @@ function localAccountDisplay(data) {
   return '-';
 }
 
+let customerIdentityCache = null;
+let customerIdentityPromise = null;
+
 function customerInstallId() {
-  let id = localStorage.getItem('jjozzy_customer_install_id') || localStorage.getItem('jjozzy_install_id') || '';
+  const backendId = customerIdentityCache && (customerIdentityCache.install_id || customerIdentityCache.machine_id);
+  let id = backendId || localStorage.getItem('jjozzy_customer_install_id') || localStorage.getItem('jjozzy_install_id') || '';
   if (!id || String(id).startsWith('jjozzy-') || String(id).startsWith('jjozzy-web-')) {
     const raw = (window.crypto && crypto.randomUUID) ? crypto.randomUUID().replaceAll('-', '') : (Date.now().toString(16) + Math.random().toString(16).slice(2));
     id = 'cust-' + raw.slice(0, 32);
@@ -2021,6 +2025,27 @@ function customerInstallId() {
   localStorage.setItem('jjozzy_customer_install_id', id);
   localStorage.setItem('jjozzy_install_id', id);
   return id;
+}
+
+async function loadCustomerIdentity() {
+  if (customerIdentityCache) return customerIdentityCache;
+  if (customerIdentityPromise) return customerIdentityPromise;
+  customerIdentityPromise = fetchJson('/customer/identity', { credentials: 'same-origin', cache: 'no-store' })
+    .then(data => {
+      customerIdentityCache = data || {};
+      const id = data && (data.install_id || data.machine_id);
+      if (id) {
+        localStorage.setItem('jjozzy_customer_install_id', id);
+        localStorage.setItem('jjozzy_install_id', id);
+        setText('customer-install-id', id);
+      }
+      if (data && data.email && !localStorage.getItem('jjozzy_customer_email')) localStorage.setItem('jjozzy_customer_email', data.email);
+      if (data && data.name && !localStorage.getItem('jjozzy_customer_name')) localStorage.setItem('jjozzy_customer_name', data.name);
+      return customerIdentityCache;
+    })
+    .catch(() => null)
+    .finally(() => { customerIdentityPromise = null; });
+  return customerIdentityPromise;
 }
 
 function saveCustomerApprovalFields() {
@@ -2057,6 +2082,8 @@ function setCustomerApproval(allowed, payload = null) {
 
 async function customerRuntimePayload() {
   loadCustomerApprovalFields();
+  await loadCustomerIdentity();
+  const installId = customerInstallId();
   const email = document.getElementById('customer-approval-email')?.value?.trim() || localStorage.getItem('jjozzy_customer_email') || '';
   const name = document.getElementById('customer-approval-name')?.value?.trim() || localStorage.getItem('jjozzy_customer_name') || '';
   const payload = {
@@ -2064,8 +2091,8 @@ async function customerRuntimePayload() {
     customer_email: email,
     name,
     customer_name: name,
-    install_id: customerInstallId(),
-    machine_id: customerInstallId(),
+    install_id: installId,
+    machine_id: installId,
     client_kind: 'customer',
     loaded: true,
     page: 'dashboard',
@@ -2180,9 +2207,11 @@ async function requestCustomerApproval() {
 
 async function checkCustomerApproval() {
   loadCustomerApprovalFields();
+  await loadCustomerIdentity();
   try {
     const email = document.getElementById('customer-approval-email')?.value?.trim() || localStorage.getItem('jjozzy_customer_email') || '';
-    const query = new URLSearchParams({ email, customer_email: email, install_id: customerInstallId(), machine_id: customerInstallId() });
+    const installId = customerInstallId();
+    const query = new URLSearchParams({ email, customer_email: email, install_id: installId, machine_id: installId });
     const data = await fetchJson(`/customer/approval-status?${query.toString()}`, { credentials:'same-origin', cache:'no-store' });
     const allowed = Boolean(data?.allowed || data?.approved || data?.admin_allowed || data?.approval_allowed || data?.license?.allowed);
     setCustomerApproval(allowed, data);
@@ -3800,21 +3829,38 @@ async function submitOrder(mode) {
   setStatus(`${mode.toUpperCase()} order submitted.`);
 }
 
+let refreshAllRunning = false;
+let liveRefreshRunning = false;
+
 async function refreshAll() {
-  setStatus('Refreshing dashboard...');
-  const ok = await refreshFastPanels();
-  setStatus(ok ? 'Dashboard refreshed.' : 'Dashboard refreshed with one or more panel warnings.', !ok);
-  setTimeout(() => safeAction(refreshSlowPanelsInBackground), 250);
+  if (refreshAllRunning) return;
+  refreshAllRunning = true;
+  try {
+    setStatus('Refreshing dashboard...');
+    await loadCustomerIdentity();
+    const ok = await refreshFastPanels();
+    setStatus(ok ? 'Dashboard refreshed.' : 'Dashboard refreshed with one or more panel warnings.', !ok);
+    setTimeout(() => safeAction(refreshSlowPanelsInBackground), 250);
+  } finally {
+    refreshAllRunning = false;
+  }
 }
 
 async function refreshLiveBotPanels() {
-  await refreshFastPanels();
+  if (liveRefreshRunning) return;
+  liveRefreshRunning = true;
+  try {
+    await refreshFastPanels();
+  } finally {
+    liveRefreshRunning = false;
+  }
 }
 
 window.addEventListener('resize', () => drawCandleChart());
 setupDashboardPages();
 toggleLimitPrice();
 loadCustomerApprovalFields();
+safeAction(loadCustomerIdentity);
 safeAction(refreshAll);
 window.setInterval(() => safeAction(refreshLiveBotPanels), 15000);
 </script>
