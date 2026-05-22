@@ -1860,51 +1860,17 @@ function formatShortTime(value) {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
-let __jjozzyLocalSessionToken = null;
-async function ensureLocalSessionToken() {
-  if (__jjozzyLocalSessionToken) return __jjozzyLocalSessionToken;
-  try {
-    const res = await fetch('/local/session-token', { credentials: 'same-origin', cache: 'no-store' });
-    const txt = await res.text();
-    const data = txt ? JSON.parse(txt) : {};
-    if (res.ok && data && data.token) {
-      __jjozzyLocalSessionToken = data.token;
-      return __jjozzyLocalSessionToken;
-    }
-  } catch (err) {
-    console.warn('Local session token fetch failed:', err);
-  }
-  return '';
-}
-
 async function fetchJson(url, options = {}) {
-  const opts = Object.assign({ credentials: 'same-origin', cache: 'no-store' }, options || {});
+  const opts = Object.assign({ credentials: 'same-origin' }, options || {});
   opts.headers = Object.assign({ 'X-JJOzzy-Requested-With': 'dashboard' }, opts.headers || {});
-  if (__jjozzyLocalSessionToken) opts.headers['X-JJOzzy-Local-Session'] = __jjozzyLocalSessionToken;
-
-  let res = await fetch(url, opts);
-  let txt = await res.text();
+  const res = await fetch(url, opts);
+  const txt = await res.text();
   let data;
   try {
     data = txt ? JSON.parse(txt) : null;
   } catch {
     data = txt;
   }
-
-  if (res.status === 401 && !String(url).includes('/local/session-token')) {
-    const token = await ensureLocalSessionToken();
-    if (token) {
-      opts.headers['X-JJOzzy-Local-Session'] = token;
-      res = await fetch(url, opts);
-      txt = await res.text();
-      try {
-        data = txt ? JSON.parse(txt) : null;
-      } catch {
-        data = txt;
-      }
-    }
-  }
-
   if (!res.ok) {
     const detail = data && typeof data === 'object' ? (data.detail || data.message || JSON.stringify(data, null, 2)) : (txt || res.statusText);
     throw new Error(detail);
@@ -2007,15 +1973,9 @@ function firstPositiveNumberText(...values) {
 
 function liveBalanceDisplayFromOverview(data) {
   if (!data || typeof data !== 'object') return '';
-
   const tradeBalance = data.live_trade_balance || {};
-  const tradeBalanceText = firstPositiveNumberText(
-    tradeBalance.mf,
-    tradeBalance.eb,
-    tradeBalance.e,
-    tradeBalance.tb
-  );
-  if (tradeBalanceText) return `${formatNumber(tradeBalanceText, 4)} AUD`;
+  const tradeText = firstPositiveNumberText(tradeBalance.mf, tradeBalance.eb, tradeBalance.e, tradeBalance.tb);
+  if (tradeText) return `${formatNumber(tradeText, 4)} AUD`;
 
   const balances = Array.isArray(data.live_balances) ? data.live_balances : [];
   const quotePriority = ['ZAUD', 'AUD', 'ZUSD', 'USD', 'ZEUR', 'EUR'];
@@ -2026,22 +1986,11 @@ function liveBalanceDisplayFromOverview(data) {
     if (value) return `${formatNumber(value, 8)} ${liveAssetLabel(row.asset)}`;
   }
 
-  const firstPositive = balances.find(b =>
-    Number(b.available ?? 0) > 0 ||
-    Number(b.balance ?? 0) > 0 ||
-    Number(b.hold_trade ?? 0) > 0 ||
-    Number(b.credit ?? 0) > 0
-  );
-  if (firstPositive) {
-    const value = firstPositiveNumberText(
-      firstPositive.available,
-      firstPositive.balance,
-      firstPositive.hold_trade,
-      firstPositive.credit
-    );
-    if (value) return `${formatNumber(value, 8)} ${liveAssetLabel(firstPositive.asset)}`;
+  const first = balances.find(b => Number(b.available ?? 0) > 0 || Number(b.balance ?? 0) > 0 || Number(b.hold_trade ?? 0) > 0 || Number(b.credit ?? 0) > 0);
+  if (first) {
+    const value = firstPositiveNumberText(first.available, first.balance, first.hold_trade, first.credit);
+    if (value) return `${formatNumber(value, 8)} ${liveAssetLabel(first.asset)}`;
   }
-
   return '';
 }
 
@@ -2054,10 +2003,12 @@ function localAccountDisplay(data) {
   for (const key of ['total_equity', 'equity', 'total_balance', 'balance', 'cash', 'available_cash']) {
     if (data[key] !== undefined && data[key] !== null && data[key] !== '') return String(data[key]);
   }
+
   const balances = data.balances || data.paper_balance || {};
   for (const key of ['total_equity', 'cash', 'balance', 'primary_balance', 'primary_available']) {
     if (balances[key] !== undefined && balances[key] !== null && balances[key] !== '') return String(balances[key]);
   }
+
   return '-';
 }
 
@@ -2336,20 +2287,30 @@ function sortLiveBalances(items) {
 function getLiveCashDisplay(data, balances) {
   const liveDisplay = liveBalanceDisplayFromOverview(data);
   if (liveDisplay) return liveDisplay;
+
+  const rows = Array.isArray(balances) ? balances : [];
+  const audRow = rows.find(b => ['ZAUD', 'AUD'].includes(String(b.asset || '').toUpperCase()));
+  const usdRow = rows.find(b => ['ZUSD', 'USD'].includes(String(b.asset || '').toUpperCase()));
+  const eurRow = rows.find(b => ['ZEUR', 'EUR'].includes(String(b.asset || '').toUpperCase()));
+  for (const row of [audRow, usdRow, eurRow]) {
+    if (!row) continue;
+    const value = firstPositiveNumberText(row.available, row.balance, row.hold_trade);
+    if (value) return `${formatNumber(value, 8)} ${liveAssetLabel(row.asset)}`;
+  }
   return 'LIVE';
 }
 
 function getLiveEquityDisplay(data) {
   const tradeBalance = data.live_trade_balance || {};
-  const equityText = firstPositiveNumberText(tradeBalance.eb, tradeBalance.e, tradeBalance.tb);
-  if (equityText) return `${formatNumber(equityText, 4)} AUD`;
+  const value = firstPositiveNumberText(tradeBalance.eb, tradeBalance.e, tradeBalance.tb, tradeBalance.mf);
+  if (value) return `${formatNumber(value, 4)} AUD`;
   return liveBalanceDisplayFromOverview(data) || 'LIVE';
 }
 
 function getLiveAssetsTotal(data) {
   const tradeBalance = data.live_trade_balance || {};
-  const equityText = firstPositiveNumberText(tradeBalance.eb, tradeBalance.e, tradeBalance.tb);
-  if (equityText) return `${formatNumber(equityText, 4)} AUD`;
+  const value = firstPositiveNumberText(tradeBalance.eb, tradeBalance.e, tradeBalance.tb, tradeBalance.mf);
+  if (value) return `${formatNumber(value, 4)} AUD`;
   return liveBalanceDisplayFromOverview(data) || 'LIVE';
 }
 
@@ -3638,41 +3599,164 @@ async function loadBotStatus() {
   try { await loadSellSafety(); } catch (e) { console.warn('Sell safety feed unavailable', e); }
 }
 
+
+async function loadBotStatusFast() {
+  const data = await fetchJson('/bot/status', { cache: 'no-store' });
+  latestBotStatus = data;
+  const runningEl = document.getElementById('runtime-running');
+  const desiredEl = document.getElementById('runtime-desired');
+  const stopEl = document.getElementById('runtime-stop-reason');
+  if (runningEl) {
+    runningEl.textContent = data?.running ? 'RUNNING' : 'STOPPED';
+    runningEl.className = `runtime-value ${data?.running ? 'ok' : 'bad'}`;
+  }
+  if (desiredEl) {
+    desiredEl.textContent = data?.desired_running ? 'ARMED' : 'OFF';
+    desiredEl.className = `runtime-value ${data?.desired_running ? 'ok' : 'warn'}`;
+  }
+  if (stopEl) {
+    stopEl.textContent = data?.last_stop_reason || '-';
+    stopEl.className = `runtime-value ${data?.last_stop_reason ? 'warn' : 'ok'}`;
+  }
+  setText('kpi-mode-strip', String(data?.mode || '-').toUpperCase());
+  setJson('bot-status-box', data);
+  const decisions = Array.isArray(data?.decisions) ? data.decisions.slice(-10).reverse() : [];
+  latestUnifiedDecisions = decisions;
+  latestDecisionMap = {};
+  decisions.forEach(d => { if (d && d.symbol) latestDecisionMap[String(d.symbol).toUpperCase()] = d; });
+  try { renderDecisionRows(decisions); } catch (e) { console.warn('Decision rows skipped', e); }
+  return data;
+}
+
+async function loadAccountFast() {
+  const data = await fetchJson('/account/overview', { cache: 'no-store' });
+  try { renderAccountWarnings(data); } catch (e) { console.warn('Account warning skipped', e); }
+  const isLive = String(data.mode || '').toLowerCase() === 'live';
+  try { setLiveModeUi(isLive); } catch (e) {}
+  const modeValue = (data.mode || '-').toUpperCase();
+  setText('kpi-mode', modeValue);
+  setText('kpi-mode-strip', modeValue);
+  const balance = localAccountDisplay(data);
+  setText('balance-strip', balance);
+  setText('runtime-balance', balance);
+
+  const body = document.getElementById('positions-body');
+  if (!body) return data;
+
+  if (isLive) {
+    const rawBalances = Array.isArray(data.live_balances) ? data.live_balances : [];
+    const balances = sortLiveBalances(rawBalances.filter(meaningfulLiveBalance));
+    const openOrders = Array.isArray(data.live_open_orders) ? data.live_open_orders : [];
+    setText('kpi-cash', getLiveCashDisplay(data, balances));
+    setText('kpi-equity', getLiveEquityDisplay(data));
+    setText('kpi-assets-total', getLiveAssetsTotal(data));
+    setText('kpi-trades', String(openOrders.length));
+    body.innerHTML = balances.length
+      ? balances.map(b => `
+        <tr>
+          <td class="mono">${escapeHtml(liveAssetLabel(b.asset ?? '-'))}<br><span class="small-note">${escapeHtml(b.asset ?? '-')}</span></td>
+          <td>${formatNumber(b.available, 8)}</td>
+          <td>${formatNumber(b.balance, 8)}</td>
+          <td>${formatNumber(b.hold_trade, 8)}</td>
+          <td>${formatNumber(b.credit, 8)}</td>
+          <td>${formatNumber(b.credit_used, 8)}</td>
+        </tr>
+      `).join('')
+      : `<tr><td colspan="6">${data.live_balance_error ? `Live balance error: ${escapeHtml(data.live_balance_error)}` : 'No meaningful live balances returned.'}</td></tr>`;
+    setJson('live-trade-balance-box', Object.keys(data.live_trade_balance || {}).length ? data.live_trade_balance : (data.live_trade_balance_error || 'No live trade balance returned.'));
+  } else {
+    setText('kpi-cash', data.cash ?? data.paper_balance?.cash ?? '-');
+    setText('kpi-equity', data.total_equity ?? data.paper_balance?.total_equity ?? '-');
+    setText('kpi-assets-total', data.assets_value ?? data.total_equity ?? '-');
+    setText('kpi-trades', data.trade_count ?? 0);
+    const positions = Array.isArray(data.positions) ? data.positions : [];
+    body.innerHTML = positions.length
+      ? positions.map(p => `
+        <tr>
+          <td class="mono">${escapeHtml(p.symbol ?? '-')}</td>
+          <td>${formatNumber(p.quantity, 8)}</td>
+          <td>${formatNumber(p.average_price, 8)}</td>
+          <td>${formatNumber(p.market_price, 8)}</td>
+          <td>${formatNumber((Number(p.quantity || 0) * Number(p.market_price || 0)), 2)}</td>
+          <td>${formatNumber((Number(p.market_price || 0) - Number(p.average_price || 0)) * Number(p.quantity || 0), 2)}</td>
+        </tr>
+      `).join('')
+      : '<tr><td colspan="6">No paper positions open.</td></tr>';
+  }
+  return data;
+}
+
+async function loadCustomerRuntimeOverviewFast() {
+  try {
+    const health = await fetchJson('/health', { cache: 'no-store' });
+    const up = health?.ok !== false;
+    setServerLight(up);
+    setText('server-state', up ? 'SERVER UP' : 'SERVER DOWN');
+    setText('server-state-card', up ? 'SERVER UP' : 'SERVER DOWN');
+  } catch (err) {
+    setServerLight(false);
+    setText('server-state', 'SERVER DOWN');
+    setText('server-state-card', 'SERVER DOWN');
+  }
+  try { await loadAccountFast(); } catch (e) { console.warn('Account fast refresh failed', e); }
+  try { await sendCustomerCheckIn(false); } catch (e) { console.warn('Customer heartbeat skipped', e); }
+}
+
+async function refreshFastPanels() {
+  const tasks = [
+    loadCustomerRuntimeOverviewFast(),
+    loadConnectionStatus(),
+    loadBotStatusFast()
+  ];
+  const results = await Promise.allSettled(tasks);
+  results.forEach(r => { if (r.status === 'rejected') console.error(r.reason); });
+  return !results.some(r => r.status === 'rejected');
+}
+
+async function refreshSlowPanelsInBackground() {
+  const jobs = [
+    () => loadSellSafety(),
+    () => loadNoTradeReasons(),
+    () => loadProductionReadiness(),
+    () => loadLicenseStatus()
+  ];
+  for (const job of jobs) {
+    try { await job(); } catch (e) { console.warn('Background panel skipped', e); }
+  }
+}
+
 async function startBot() {
-  await fetchJson('/bot/start', { method: 'POST' });
-  await loadBotStatus();
-  await loadDecisionFeedIntel();
+  setStatus('Starting bot...');
+  await fetchJson('/bot/start', { method: 'POST', cache: 'no-store' });
+  await refreshFastPanels();
   setStatus('Bot started.');
 }
 
 async function stopBot() {
-  await fetchJson('/bot/stop', { method: 'POST' });
-  await loadBotStatus();
-  await loadDecisionFeedIntel();
+  setStatus('Stopping bot...');
+  await fetchJson('/bot/stop', { method: 'POST', cache: 'no-store' });
+  await refreshFastPanels();
   setStatus('Bot stopped.');
 }
 
 async function runBotOnce() {
-  await fetchJson('/bot/run-once', { method: 'POST' });
-  await loadBotStatus();
-  await loadAccount();
-  await loadTrades();
-  await loadDecisionFeedIntel();
+  setStatus('Running one bot cycle...');
+  await fetchJson('/bot/run-once', { method: 'POST', cache: 'no-store' });
+  await refreshFastPanels();
   setStatus('Bot cycle completed.');
+  setTimeout(() => safeAction(refreshSlowPanelsInBackground), 300);
 }
 
 async function setMode(mode) {
   try {
-    await fetchJson(`/bot/mode?mode=${encodeURIComponent(mode)}`, { method: 'POST' });
-    await loadBotStatus();
-    await loadAccount();
-    await loadTrades();
-    await loadDecisionFeedIntel();
+    setStatus(`Switching to ${mode} mode...`);
+    await fetchJson(`/bot/mode?mode=${encodeURIComponent(mode)}`, { method: 'POST', cache: 'no-store' });
+    await refreshFastPanels();
     setStatus(`Mode set to ${mode}.`);
   } catch (err) {
     let detail = err && err.message ? err.message : String(err);
     try {
-      const liveDebug = await fetchJson('/customer/live-mode-debug');
+      const liveDebug = await fetchJson('/customer/live-mode-debug', { cache: 'no-store' });
       const blockers = Array.isArray(liveDebug.blocking_reasons) ? liveDebug.blocking_reasons.join(' | ') : '';
       detail = blockers || detail;
       setJson('production-ready-box', liveDebug);
@@ -3684,8 +3768,9 @@ async function setMode(mode) {
 }
 
 async function refreshPairs() {
-  const d = await fetchJson('/bot/refresh-pairs', { method: 'POST' });
-  await loadBotStatus();
+  setStatus('Refreshing Kraken pairs...');
+  const d = await fetchJson('/bot/refresh-pairs', { method: 'POST', cache: 'no-store' });
+  await loadBotStatusFast();
   setStatus(`Pairs refreshed: ${d.pair_count}.`);
 }
 
@@ -3716,20 +3801,14 @@ async function submitOrder(mode) {
 }
 
 async function refreshAll() {
-  const tasks = [loadCustomerRuntimeOverview(), loadConnectionStatus(), loadConfig(), loadSettingsEditor(), loadAccount(), loadMarket(), loadTrades(), loadBotStatus(), loadWorkspaceIntel(), loadSellSafety(), loadProductionReadiness(), loadLicenseStatus()];
-  const results = await Promise.allSettled(tasks);
-  results.forEach(r => { if (r.status === 'rejected') console.error(r.reason); });
-  try { await loadDecisionFeedIntel(); } catch (err) { console.error(err); }
-  setStatus(results.some(r => r.status === 'rejected') ? 'Dashboard refreshed with one or more panel warnings.' : 'Dashboard refreshed.', results.some(r => r.status === 'rejected'));
+  setStatus('Refreshing dashboard...');
+  const ok = await refreshFastPanels();
+  setStatus(ok ? 'Dashboard refreshed.' : 'Dashboard refreshed with one or more panel warnings.', !ok);
+  setTimeout(() => safeAction(refreshSlowPanelsInBackground), 250);
 }
 
 async function refreshLiveBotPanels() {
-  await loadCustomerRuntimeOverview();
-  await loadConnectionStatus();
-  await loadBotStatus();
-  await loadSellSafety();
-  await loadProductionReadiness();
-  await loadLicenseStatus();
+  await refreshFastPanels();
 }
 
 window.addEventListener('resize', () => drawCandleChart());
@@ -3775,19 +3854,56 @@ window.setInterval(() => safeAction(refreshLiveBotPanels), 15000);
 })();
 </script>
 
-
-<script id="jjozzy-button-health-marker-20260522">
+<script id="jjozzy-fast-button-rescue-20260522">
 (function(){
-  window.__jjozzyButtonHealth = {
-    startBot: typeof window.startBot,
-    stopBot: typeof window.stopBot,
-    runBotOnce: typeof window.runBotOnce,
-    requestCustomerApproval: typeof window.requestCustomerApproval,
-    checkCustomerApproval: typeof window.checkCustomerApproval,
-    safeAction: typeof window.safeAction,
-    loadedAt: new Date().toISOString()
-  };
-  console.log('JJOzzy dashboard button functions loaded:', window.__jjozzyButtonHealth);
+  if (window.__jjozzyFastButtonRescue) return;
+  window.__jjozzyFastButtonRescue = true;
+
+  function cleanText(el){ return String(el && el.textContent || '').replace(/\s+/g,' ').trim().toLowerCase(); }
+  function isCoreButton(label){
+    return ['start bot','stop bot','run once','refresh','paper mode','live mode','refresh pairs','send request','check','save details'].includes(label);
+  }
+
+  document.addEventListener('click', function(ev){
+    const btn = ev.target && ev.target.closest ? ev.target.closest('button') : null;
+    if (!btn) return;
+    const label = cleanText(btn);
+    const attr = String(btn.getAttribute('onclick') || '').toLowerCase();
+    const isApproval = attr.includes('requestcustomerapproval') || attr.includes('checkcustomerapproval') || attr.includes('savecustomerapprovalfields');
+    if (!isCoreButton(label) && !isApproval && !attr.includes('startbot') && !attr.includes('stopbot') && !attr.includes('runbotonce') && !attr.includes('setmode') && !attr.includes('refreshpairs')) return;
+
+    ev.preventDefault();
+    ev.stopPropagation();
+    ev.stopImmediatePropagation();
+
+    if (btn.dataset.jjozzyBusy === '1') return;
+    btn.dataset.jjozzyBusy = '1';
+    const oldText = btn.textContent;
+    btn.textContent = oldText + '...';
+    btn.disabled = true;
+
+    const finish = () => {
+      btn.disabled = false;
+      btn.dataset.jjozzyBusy = '0';
+      btn.textContent = oldText;
+    };
+
+    let action = null;
+    if (label === 'start bot' || attr.includes('startbot')) action = () => window.startBot();
+    else if (label === 'stop bot' || attr.includes('stopbot')) action = () => window.stopBot();
+    else if (label === 'run once' || attr.includes('runbotonce')) action = () => window.runBotOnce();
+    else if (label === 'refresh pairs' || attr.includes('refreshpairs')) action = () => window.refreshPairs();
+    else if (label === 'paper mode' || attr.includes("setmode('paper") || attr.includes('setmode("paper')) action = () => window.setMode('paper');
+    else if (label === 'live mode' || attr.includes("setmode('live") || attr.includes('setmode("live')) action = () => window.setMode('live');
+    else if (label === 'send request' || attr.includes('requestcustomerapproval')) action = () => window.requestCustomerApproval();
+    else if (label === 'check' || attr.includes('checkcustomerapproval')) action = () => window.checkCustomerApproval();
+    else if (label === 'save details' || attr.includes('savecustomerapprovalfields')) action = () => { window.saveCustomerApprovalFields(); return Promise.resolve(); };
+    else if (label === 'refresh') action = () => window.refreshAll();
+
+    Promise.resolve(action ? action() : null)
+      .catch(err => { console.error(err); try { setStatus(String(err && err.message || err), true); } catch(e) {} alert(String(err && err.message || err)); })
+      .finally(finish);
+  }, true);
 })();
 </script>
 
