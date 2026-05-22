@@ -1860,17 +1860,51 @@ function formatShortTime(value) {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
+let __jjozzyLocalSessionToken = null;
+async function ensureLocalSessionToken() {
+  if (__jjozzyLocalSessionToken) return __jjozzyLocalSessionToken;
+  try {
+    const res = await fetch('/local/session-token', { credentials: 'same-origin', cache: 'no-store' });
+    const txt = await res.text();
+    const data = txt ? JSON.parse(txt) : {};
+    if (res.ok && data && data.token) {
+      __jjozzyLocalSessionToken = data.token;
+      return __jjozzyLocalSessionToken;
+    }
+  } catch (err) {
+    console.warn('Local session token fetch failed:', err);
+  }
+  return '';
+}
+
 async function fetchJson(url, options = {}) {
-  const opts = Object.assign({ credentials: 'same-origin' }, options || {});
+  const opts = Object.assign({ credentials: 'same-origin', cache: 'no-store' }, options || {});
   opts.headers = Object.assign({ 'X-JJOzzy-Requested-With': 'dashboard' }, opts.headers || {});
-  const res = await fetch(url, opts);
-  const txt = await res.text();
+  if (__jjozzyLocalSessionToken) opts.headers['X-JJOzzy-Local-Session'] = __jjozzyLocalSessionToken;
+
+  let res = await fetch(url, opts);
+  let txt = await res.text();
   let data;
   try {
     data = txt ? JSON.parse(txt) : null;
   } catch {
     data = txt;
   }
+
+  if (res.status === 401 && !String(url).includes('/local/session-token')) {
+    const token = await ensureLocalSessionToken();
+    if (token) {
+      opts.headers['X-JJOzzy-Local-Session'] = token;
+      res = await fetch(url, opts);
+      txt = await res.text();
+      try {
+        data = txt ? JSON.parse(txt) : null;
+      } catch {
+        data = txt;
+      }
+    }
+  }
+
   if (!res.ok) {
     const detail = data && typeof data === 'object' ? (data.detail || data.message || JSON.stringify(data, null, 2)) : (txt || res.statusText);
     throw new Error(detail);
@@ -1975,7 +2009,12 @@ function liveBalanceDisplayFromOverview(data) {
   if (!data || typeof data !== 'object') return '';
 
   const tradeBalance = data.live_trade_balance || {};
-  const tradeBalanceText = firstPositiveNumberText(tradeBalance.mf, tradeBalance.eb, tradeBalance.e, tradeBalance.tb);
+  const tradeBalanceText = firstPositiveNumberText(
+    tradeBalance.mf,
+    tradeBalance.eb,
+    tradeBalance.e,
+    tradeBalance.tb
+  );
   if (tradeBalanceText) return `${formatNumber(tradeBalanceText, 4)} AUD`;
 
   const balances = Array.isArray(data.live_balances) ? data.live_balances : [];
@@ -1983,7 +2022,7 @@ function liveBalanceDisplayFromOverview(data) {
   for (const wanted of quotePriority) {
     const row = balances.find(b => String(b.asset || '').toUpperCase() === wanted);
     if (!row) continue;
-    const value = firstPositiveNumberText(row.available, row.balance, row.hold_trade, row.credit);
+    const value = firstPositiveNumberText(row.available, row.balance, row.hold_trade);
     if (value) return `${formatNumber(value, 8)} ${liveAssetLabel(row.asset)}`;
   }
 
@@ -2015,12 +2054,10 @@ function localAccountDisplay(data) {
   for (const key of ['total_equity', 'equity', 'total_balance', 'balance', 'cash', 'available_cash']) {
     if (data[key] !== undefined && data[key] !== null && data[key] !== '') return String(data[key]);
   }
-
   const balances = data.balances || data.paper_balance || {};
   for (const key of ['total_equity', 'cash', 'balance', 'primary_balance', 'primary_available']) {
     if (balances[key] !== undefined && balances[key] !== null && balances[key] !== '') return String(balances[key]);
   }
-
   return '-';
 }
 
@@ -2299,26 +2336,21 @@ function sortLiveBalances(items) {
 function getLiveCashDisplay(data, balances) {
   const liveDisplay = liveBalanceDisplayFromOverview(data);
   if (liveDisplay) return liveDisplay;
-  const list = Array.isArray(balances) ? balances : [];
-  const row = list.find(b => meaningfulLiveBalance(b));
-  if (row) return `${formatNumber(row.available || row.balance || row.hold_trade || row.credit, 8)} ${liveAssetLabel(row.asset)}`;
   return 'LIVE';
 }
 
 function getLiveEquityDisplay(data) {
-  const tradeBalance = data?.live_trade_balance || {};
-  const value = firstPositiveNumberText(tradeBalance.eb, tradeBalance.e, tradeBalance.tb, tradeBalance.mf);
-  if (value) return `${formatNumber(value, 4)} AUD`;
+  const tradeBalance = data.live_trade_balance || {};
+  const equityText = firstPositiveNumberText(tradeBalance.eb, tradeBalance.e, tradeBalance.tb);
+  if (equityText) return `${formatNumber(equityText, 4)} AUD`;
   return liveBalanceDisplayFromOverview(data) || 'LIVE';
 }
 
 function getLiveAssetsTotal(data) {
-  const tradeBalance = data?.live_trade_balance || {};
-  const value = firstPositiveNumberText(tradeBalance.eb, tradeBalance.e, tradeBalance.tb);
-  if (value) return `${formatNumber(value, 4)} AUD`;
-  const balances = Array.isArray(data?.live_balances) ? data.live_balances : [];
-  const count = balances.filter(meaningfulLiveBalance).length;
-  return count ? `${count} assets` : 'LIVE';
+  const tradeBalance = data.live_trade_balance || {};
+  const equityText = firstPositiveNumberText(tradeBalance.eb, tradeBalance.e, tradeBalance.tb);
+  if (equityText) return `${formatNumber(equityText, 4)} AUD`;
+  return liveBalanceDisplayFromOverview(data) || 'LIVE';
 }
 
 function renderFocusDecision(decision) {
@@ -3743,357 +3775,19 @@ window.setInterval(() => safeAction(refreshLiveBotPanels), 15000);
 })();
 </script>
 
-<script id="jjozzy-hard-data-binder-final-20260522">
+
+<script id="jjozzy-button-health-marker-20260522">
 (function(){
-  if (window.__JJOZZY_HARD_DATA_BINDER_FINAL__) return;
-  window.__JJOZZY_HARD_DATA_BINDER_FINAL__ = true;
-
-  let localSessionToken = "";
-  let lastAccount = null;
-  let lastBotStatus = null;
-  let lastConnection = null;
-
-  function el(id){ return document.getElementById(id); }
-  function set(id, value){
-    const node = el(id);
-    if (!node) return;
-    const text = (value === undefined || value === null || value === "") ? "-" : String(value);
-    if (node.textContent !== text) node.textContent = text;
-  }
-  function cls(id, add, remove){
-    const node = el(id);
-    if (!node) return;
-    (remove || []).forEach(c => node.classList.remove(c));
-    (add || []).forEach(c => node.classList.add(c));
-  }
-  function json(id, value){
-    const node = el(id);
-    if (!node) return;
-    node.textContent = typeof value === "string" ? value : JSON.stringify(value, null, 2);
-  }
-  function escapeHtml(value){
-    return String(value ?? "").replace(/[&<>"']/g, function(c){
-      return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
-    });
-  }
-  function n(value){
-    const parsed = Number(value ?? 0);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  function fmt(value, digits){
-    const parsed = Number(value ?? 0);
-    if (!Number.isFinite(parsed)) return "-";
-    return parsed.toLocaleString(undefined, { maximumFractionDigits: digits ?? 8 });
-  }
-  async function getToken(){
-    if (localSessionToken) return localSessionToken;
-    try{
-      const response = await fetch("/local/session-token", { credentials:"same-origin", cache:"no-store" });
-      if (response.ok) {
-        const data = await response.json();
-        localSessionToken = data.token || data.session_token || data.local_session_token || "";
-      }
-    }catch(_){}
-    return localSessionToken;
-  }
-  async function api(path, options){
-    const opts = Object.assign({ credentials:"same-origin", cache:"no-store" }, options || {});
-    opts.headers = Object.assign({ "X-JJOzzy-Requested-With":"dashboard" }, opts.headers || {});
-    const token = await getToken();
-    if (token) opts.headers["X-JJOzzy-Local-Session"] = token;
-    let response = await fetch(path, opts);
-    if (response.status === 401) {
-      localSessionToken = "";
-      const retryToken = await getToken();
-      if (retryToken) opts.headers["X-JJOzzy-Local-Session"] = retryToken;
-      response = await fetch(path, opts);
-    }
-    const text = await response.text();
-    let data;
-    try { data = text ? JSON.parse(text) : {}; } catch { data = { raw:text }; }
-    if (!response.ok) {
-      const detail = data.detail || data.message || text || response.statusText;
-      throw new Error(detail);
-    }
-    return data;
-  }
-
-  function assetLabel(asset){
-    const raw = String(asset || "").toUpperCase();
-    if (raw === "ZUSD") return "USD";
-    if (raw === "ZAUD") return "AUD";
-    if (raw === "ZEUR") return "EUR";
-    if (raw.startsWith("Z") && raw.length === 4) return raw.slice(1);
-    if (raw.startsWith("X") && raw.length > 3) return raw.slice(1);
-    return raw;
-  }
-  function firstPositive(){
-    for (let i=0;i<arguments.length;i++){
-      const value = arguments[i];
-      const parsed = Number(value ?? 0);
-      if (Number.isFinite(parsed) && parsed > 0) return String(value);
-    }
-    return "";
-  }
-  function isMeaningfulBalance(row){
-    return n(row && row.available) > 0 || n(row && row.balance) > 0 || n(row && row.hold_trade) > 0 || n(row && row.credit) > 0 || n(row && row.credit_used) > 0;
-  }
-  function balanceDisplay(account){
-    if (!account || typeof account !== "object") return "-";
-    const tb = account.live_trade_balance || {};
-    const trade = firstPositive(tb.mf, tb.eb, tb.e, tb.tb);
-    if (trade) return fmt(trade, 4) + " AUD";
-
-    const balances = Array.isArray(account.live_balances) ? account.live_balances : [];
-    for (const wanted of ["ZAUD","AUD","ZUSD","USD","ZEUR","EUR"]){
-      const row = balances.find(b => String(b.asset || "").toUpperCase() === wanted);
-      if (!row) continue;
-      const value = firstPositive(row.available, row.balance, row.hold_trade, row.credit);
-      if (value) return fmt(value, 8) + " " + assetLabel(row.asset);
-    }
-    const any = balances.find(isMeaningfulBalance);
-    if (any) {
-      const value = firstPositive(any.available, any.balance, any.hold_trade, any.credit, any.credit_used);
-      if (value) return fmt(value, 8) + " " + assetLabel(any.asset);
-    }
-
-    for (const key of ["total_equity","equity","total_balance","balance","cash","available_cash"]){
-      if (account[key] !== undefined && account[key] !== null && account[key] !== "") return String(account[key]);
-    }
-    const paper = account.balances || account.paper_balance || {};
-    for (const key of ["total_equity","cash","balance","primary_balance","primary_available"]){
-      if (paper[key] !== undefined && paper[key] !== null && paper[key] !== "") return String(paper[key]);
-    }
-    return "-";
-  }
-
-  function installId(){
-    let id = localStorage.getItem("jjozzy_customer_install_id") || localStorage.getItem("jjozzy_install_id") || "";
-    if (!id || id.startsWith("jjozzy-") || id.startsWith("jjozzy-web-")) {
-      const raw = (crypto && crypto.randomUUID) ? crypto.randomUUID().replaceAll("-", "") : (Date.now().toString(16) + Math.random().toString(16).slice(2));
-      id = "cust-" + raw.slice(0, 32);
-      localStorage.setItem("jjozzy_customer_install_id", id);
-      localStorage.setItem("jjozzy_install_id", id);
-    }
-    set("customer-install-id", id);
-    return id;
-  }
-  function email(){
-    const input = el("customer-approval-email") || el("jjozzyApprovalEmail");
-    const current = (input && input.value ? input.value.trim() : "") || localStorage.getItem("jjozzy_customer_email") || "";
-    if (current) {
-      localStorage.setItem("jjozzy_customer_email", current);
-      if (input && !input.value) input.value = current;
-    }
-    return current;
-  }
-  function name(){
-    const input = el("customer-approval-name") || el("jjozzyApprovalName");
-    const current = (input && input.value ? input.value.trim() : "") || localStorage.getItem("jjozzy_customer_name") || "";
-    if (current) {
-      localStorage.setItem("jjozzy_customer_name", current);
-      if (input && !input.value) input.value = current;
-    }
-    return current;
-  }
-
-  function renderAccount(account){
-    lastAccount = account;
-    const mode = String(account.mode || "-").toUpperCase();
-    const bal = balanceDisplay(account);
-    set("balance-strip", bal);
-    set("runtime-balance", bal);
-    set("kpi-mode", mode);
-    set("kpi-mode-strip", mode);
-    set("kpi-cash", bal);
-
-    const tb = account.live_trade_balance || {};
-    const equity = firstPositive(tb.eb, tb.e, tb.tb);
-    set("kpi-equity", equity ? fmt(equity, 4) + " AUD" : (account.total_equity || bal));
-    set("kpi-assets-total", equity ? fmt(equity, 4) + " AUD" : bal);
-
-    const openOrders = Array.isArray(account.live_open_orders) ? account.live_open_orders : [];
-    set("kpi-trades", account.trade_count ?? openOrders.length ?? 0);
-
-    const body = el("positions-body");
-    if (!body) return;
-    const isLive = String(account.mode || "").toLowerCase() === "live";
-    if (isLive) {
-      const balances = (Array.isArray(account.live_balances) ? account.live_balances : []).filter(isMeaningfulBalance);
-      balances.sort((a,b) => Math.max(n(b.balance),n(b.available),n(b.hold_trade)) - Math.max(n(a.balance),n(a.available),n(a.hold_trade)));
-      body.innerHTML = balances.length ? balances.map(b => `
-        <tr>
-          <td class="mono">${escapeHtml(assetLabel(b.asset))}<br><span class="muted">${escapeHtml(b.asset || "")}</span></td>
-          <td>${fmt(b.available, 8)}</td>
-          <td>${fmt(b.balance, 8)}</td>
-          <td>${fmt(b.hold_trade, 8)}</td>
-          <td>${fmt(b.credit, 8)}</td>
-          <td>${fmt(b.credit_used, 8)}</td>
-        </tr>`).join("") : `<tr><td colspan="6">${escapeHtml(account.live_balance_error || "No live balances returned.")}</td></tr>`;
-      json("live-trade-balance-box", Object.keys(tb).length ? tb : (account.live_trade_balance_error || "No trade balance returned."));
-    } else {
-      const positions = Array.isArray(account.positions) ? account.positions : [];
-      body.innerHTML = positions.length ? positions.map(p => `
-        <tr>
-          <td class="mono">${escapeHtml(p.symbol || "-")}</td>
-          <td>${fmt(p.quantity,8)}</td>
-          <td>${fmt(p.average_price,8)}</td>
-          <td>${fmt(p.market_price,8)}</td>
-          <td>${fmt(n(p.quantity)*n(p.market_price),2)}</td>
-          <td>${fmt((n(p.market_price)-n(p.average_price))*n(p.quantity),2)}</td>
-        </tr>`).join("") : `<tr><td colspan="6">No paper positions.</td></tr>`;
-    }
-  }
-
-  function renderBot(status){
-    lastBotStatus = status || {};
-    set("runtime-running", status && status.running ? "RUNNING" : "STOPPED");
-    cls("runtime-running", [status && status.running ? "ok" : "bad"], ["ok","warn","bad"]);
-    set("runtime-desired", status && status.desired_running ? "ARMED" : "OFF");
-    cls("runtime-desired", [status && status.desired_running ? "ok" : "warn"], ["ok","warn","bad"]);
-    set("runtime-stop-reason", (status && status.last_stop_reason) || "-");
-    const mode = String((status && status.mode) || "-").toUpperCase();
-    set("kpi-mode-strip", mode);
-    set("kpi-mode", mode);
-    json("bot-status-box", status || {});
-  }
-
-  function renderConnection(data){
-    lastConnection = data || {};
-    const privateReady = !!(data && data.private_account_data && data.private_account_data.enabled);
-    const configured = !!(data && data.private_account_data && data.private_account_data.api_configured);
-    if (privateReady) { set("runtime-api", "Live Ready"); cls("runtime-api", ["ok"], ["warn","bad"]); }
-    else if (configured) { set("runtime-api", "Saved / Dry Run"); cls("runtime-api", ["warn"], ["ok","bad"]); }
-    else { set("runtime-api", "Missing"); cls("runtime-api", ["bad"], ["ok","warn"]); }
-  }
-
-  async function heartbeat(){
-    try{
-      const payload = {
-        email: email(),
-        customer_email: email(),
-        display_email: email(),
-        name: name(),
-        customer_name: name(),
-        install_id: installId(),
-        machine_id: installId(),
-        client_kind: "customer",
-        page: location.pathname,
-        loaded: true,
-        running: !!(lastBotStatus && lastBotStatus.running),
-        mode: (lastBotStatus && lastBotStatus.mode) || (lastAccount && lastAccount.mode) || "paper",
-        balance: balanceDisplay(lastAccount),
-        account: lastAccount || {},
-        bot_status: lastBotStatus || {},
-        connection_status: lastConnection || {},
-        checked_at: new Date().toISOString()
-      };
-      await api("/customer/heartbeat", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload) });
-    }catch(err){
-      console.warn("JJOzzy heartbeat failed", err);
-    }
-  }
-
-  async function checkApproval(){
-    try{
-      const q = new URLSearchParams({ email: email(), customer_email: email(), install_id: installId(), machine_id: installId() });
-      const data = await api("/customer/approval-status?" + q.toString());
-      const ok = !!(data.allowed || data.approved || data.admin_allowed || data.approval_allowed || (data.license && data.license.allowed));
-      set("customer-approval-state", ok ? "Approved" : "Waiting approval");
-      set("runtime-approval", ok ? "Approved" : "Paper Only");
-      cls("runtime-approval", [ok ? "ok" : "warn"], ["ok","warn","bad"]);
-      json("customer-approval-box", data);
-      return data;
-    }catch(err){
-      set("runtime-approval", "Approval error");
-      cls("runtime-approval", ["bad"], ["ok","warn"]);
-      json("customer-approval-box", { ok:false, error:String(err.message || err) });
-      return null;
-    }
-  }
-
-  async function requestApproval(){
-    const e = email();
-    const nm = name();
-    if (!e) {
-      alert("Enter the customer email first.");
-      return;
-    }
-    const payload = {
-      email: e,
-      customer_email: e,
-      display_email: e,
-      name: nm,
-      customer_name: nm,
-      install_id: installId(),
-      machine_id: installId(),
-      client_kind: "customer",
-      page: location.pathname,
-      loaded: true,
-      running: !!(lastBotStatus && lastBotStatus.running),
-      mode: (lastBotStatus && lastBotStatus.mode) || (lastAccount && lastAccount.mode) || "paper",
-      balance: balanceDisplay(lastAccount),
-      account: lastAccount || {},
-      bot_status: lastBotStatus || {},
-      connection_status: lastConnection || {},
-      requested_at: new Date().toISOString()
-    };
-    const data = await api("/customer/request-approval", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload) });
-    json("customer-approval-box", data);
-    await heartbeat();
-    await checkApproval();
-    alert((data && data.message) || "Approval request sent.");
-  }
-
-  async function refresh(){
-    try{
-      const health = await api("/health");
-      const up = health && health.ok !== false;
-      set("server-state", up ? "SERVER UP" : "SERVER DOWN");
-      set("server-state-card", up ? "SERVER UP" : "SERVER DOWN");
-      cls("server-light", [up ? "up" : "down"], ["up","down"]);
-      cls("server-light-card", [up ? "up" : "down"], ["up","down"]);
-    }catch(err){
-      set("server-state", "SERVER DOWN");
-      set("server-state-card", "SERVER DOWN");
-      cls("server-light", ["down"], ["up"]);
-      cls("server-light-card", ["down"], ["up"]);
-    }
-
-    try { renderConnection(await api("/connection/status")); } catch(err){ set("runtime-api","API check failed"); cls("runtime-api", ["bad"], ["ok","warn"]); }
-    try { renderAccount(await api("/account/overview")); } catch(err){ set("balance-strip","Account error"); set("runtime-balance","Account error"); console.warn("account overview failed", err); }
-    try { renderBot(await api("/bot/status")); } catch(err){ set("runtime-running","Status error"); cls("runtime-running", ["bad"], ["ok","warn"]); console.warn("bot status failed", err); }
-    await heartbeat();
-  }
-
-  function wireButtons(){
-    const sendButtons = Array.from(document.querySelectorAll("button")).filter(b => (b.textContent || "").trim().toLowerCase() === "send request");
-    sendButtons.forEach(b => {
-      b.onclick = function(ev){ ev.preventDefault(); requestApproval().catch(err => alert("Approval send failed: " + (err.message || err))); };
-    });
-    const checkButtons = Array.from(document.querySelectorAll("button")).filter(b => (b.textContent || "").trim().toLowerCase() === "check");
-    checkButtons.forEach(b => {
-      b.onclick = function(ev){ ev.preventDefault(); checkApproval().catch(err => alert("Approval check failed: " + (err.message || err))); };
-    });
-  }
-
-  function start(){
-    installId();
-    email();
-    name();
-    wireButtons();
-    refresh();
-    checkApproval();
-    window.setInterval(refresh, 5000);
-    window.setInterval(checkApproval, 15000);
-  }
-
-  window.JJOzzyHardRefresh = refresh;
-  window.JJOzzyHardRequestApproval = requestApproval;
-  window.JJOzzyHardCheckApproval = checkApproval;
-
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
-  else start();
+  window.__jjozzyButtonHealth = {
+    startBot: typeof window.startBot,
+    stopBot: typeof window.stopBot,
+    runBotOnce: typeof window.runBotOnce,
+    requestCustomerApproval: typeof window.requestCustomerApproval,
+    checkCustomerApproval: typeof window.checkCustomerApproval,
+    safeAction: typeof window.safeAction,
+    loadedAt: new Date().toISOString()
+  };
+  console.log('JJOzzy dashboard button functions loaded:', window.__jjozzyButtonHealth);
 })();
 </script>
 

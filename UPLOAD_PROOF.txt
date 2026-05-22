@@ -1,7 +1,7 @@
 ﻿JJOzzy customer package upload proof
-UploadedAt=2026-05-22T18:44:20.7969557+10:00
-Source=C:\Users\Miner-1\Downloads\CUSTOMER_LOCKED_SOURCE\build_locked\JJOzzyCryptoBot_CUSTOMER_LOCKED_20260522_164800
-ExeBytes=93421568
+UploadedAt=2026-05-22T19:44:33.8262416+10:00
+Source=C:\Users\Miner-1\Downloads\CUSTOMER_LOCKED_SOURCE\build_locked\JJOzzyCryptoBot_CUSTOMER_LOCKED_20260522_194255
+ExeBytes=93401088
 RunCustomerUrl=http://127.0.0.1:8000
 IncludesTemplate=app\templates\dashboard.html
 Uploader=02_UPLOAD_CUSTOMER_PACKAGE_TO_GITHUB.ps1
