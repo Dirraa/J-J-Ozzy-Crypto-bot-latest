@@ -1,6 +1,6 @@
 ﻿JJOzzy customer package upload proof
-UploadedAt=2026-05-22T16:08:21.9197399+10:00
-Source=C:\Users\Miner-1\Downloads\CUSTOMER_LOCKED_SOURCE\build_locked\JJOzzyCryptoBot_CUSTOMER_LOCKED_20260522_153909
+UploadedAt=2026-05-22T18:44:20.7969557+10:00
+Source=C:\Users\Miner-1\Downloads\CUSTOMER_LOCKED_SOURCE\build_locked\JJOzzyCryptoBot_CUSTOMER_LOCKED_20260522_164800
 ExeBytes=93421568
 RunCustomerUrl=http://127.0.0.1:8000
 IncludesTemplate=app\templates\dashboard.html
