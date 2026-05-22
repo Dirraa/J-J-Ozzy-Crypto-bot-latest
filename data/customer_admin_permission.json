@@ -1,0 +1,35 @@
+{
+  "admin_allowed": false,
+  "allowed": false,
+  "approval_allowed": false,
+  "checked_at": "2026-05-22T05:59:14.389593+00:00",
+  "message": "Waiting for admin approval. Contact admin before starting the bot.",
+  "raw": {
+    "admin_allowed": false,
+    "allowed": false,
+    "approval_allowed": false,
+    "attempts": [
+      {
+        "error": "<urlopen error timed out>",
+        "url": "http://61.69.236.210:8000/license/verify"
+      },
+      {
+        "error": "<urlopen error timed out>",
+        "url": "http://61.69.236.210:8000/license/approval-status"
+      },
+      {
+        "error": "<urlopen error timed out>",
+        "url": "http://61.69.236.210:8000/customer/approval-status"
+      },
+      {
+        "error": "<urlopen error timed out>",
+        "url": "http://61.69.236.210:8000/customer/approval-status?install_id=cust-09e71f71dd6542208e5ee64cab247ad4&machine_id=cust-09e71f71dd6542208e5ee64cab247ad4&customer_email=&email=&hostname=DESKTOP-AMS2TGO"
+      }
+    ],
+    "checked_at": "2026-05-22T05:59:14.389593+00:00",
+    "error": "<urlopen error timed out>",
+    "message": "Waiting for admin approval. Contact admin before starting the bot.",
+    "ok": false,
+    "status": "unavailable"
+  }
+}

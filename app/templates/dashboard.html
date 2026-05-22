@@ -1,0 +1,3761 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>J &amp; J Ozzy Crypto Bot</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root {
+  --bg:#0b0f19;
+  --bg-2:#0f1421;
+  --panel:#131a28;
+  --panel-2:#172032;
+  --panel-3:#1b253a;
+  --line:#263247;
+  --line-soft:rgba(255,255,255,.06);
+  --text:#ebf2ff;
+  --muted:#92a1b9;
+  --green:#16c784;
+  --red:#ea3943;
+  --blue:#2f7cf6;
+  --cyan:#20b8ff;
+  --amber:#f2a43a;
+  --shadow:0 18px 40px rgba(0,0,0,.28);
+}
+* { box-sizing:border-box; }
+html, body { height:100%; }
+body {
+  margin:0;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: radial-gradient(circle at top, rgba(47,124,246,.08), transparent 26%), linear-gradient(180deg, #0a0e17, #0d1320 42%, #0b1019);
+  color:var(--text);
+}
+body::before {
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(180deg, rgba(255,255,255,.02), transparent 20%);
+}
+.app-shell {
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+.topbar {
+  position:sticky;
+  top:0;
+  z-index:20;
+  backdrop-filter: blur(16px);
+  background:rgba(8, 12, 20, .82);
+  border-bottom:1px solid var(--line-soft);
+}
+.topbar-inner {
+  max-width:1800px;
+  margin:0 auto;
+  padding:14px 20px;
+  display:flex;
+  gap:18px;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.brand {
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.brand-mark {
+  width:42px;
+  height:42px;
+  border-radius:14px;
+  background:linear-gradient(135deg, #2f7cf6, #21c3ff 55%, #10b981);
+  box-shadow:0 10px 28px rgba(47,124,246,.35);
+}
+.brand-copy h1 {
+  font-size:1.06rem;
+  margin:0;
+  letter-spacing:.02em;
+}
+.brand-copy p {
+  margin:2px 0 0;
+  color:var(--muted);
+  font-size:.86rem;
+}
+.ribbon {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.ribbon-pill {
+  min-width:120px;
+  padding:8px 12px;
+  border-radius:12px;
+  background:rgba(255,255,255,.03);
+  border:1px solid var(--line);
+}
+.ribbon-label {
+  color:var(--muted);
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+.ribbon-value {
+  margin-top:3px;
+  font-size:.92rem;
+  font-weight:700;
+}
+.logout-link {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:26px;
+  padding:0 6px;
+  border-radius:8px;
+  color:var(--red);
+  text-decoration:none;
+  font-weight:900;
+}
+.logout-link:hover { background:rgba(234,57,67,.12); }
+
+
+.status-light-row {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap;
+}
+.status-light-dot {
+  width:12px;
+  height:12px;
+  border-radius:50%;
+  background:var(--amber);
+  box-shadow:0 0 0 4px rgba(242,164,58,.14), 0 0 18px rgba(242,164,58,.45);
+  flex:0 0 auto;
+}
+.status-light-dot.up {
+  background:var(--green);
+  box-shadow:0 0 0 4px rgba(22,199,132,.14), 0 0 18px rgba(22,199,132,.62);
+}
+.status-light-dot.down {
+  background:var(--red);
+  box-shadow:0 0 0 4px rgba(234,57,67,.14), 0 0 18px rgba(234,57,67,.62);
+}
+
+.runtime-grid {
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:8px;
+  margin-top:12px;
+}
+.runtime-card {
+  padding:10px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:rgba(255,255,255,.03);
+}
+.runtime-label {
+  color:var(--muted);
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+.runtime-value {
+  margin-top:4px;
+  font-size:.85rem;
+  font-weight:800;
+}
+.runtime-value.ok { color:var(--green); }
+.runtime-value.warn { color:var(--amber); }
+.runtime-value.bad { color:var(--red); }
+
+.workspace {
+  max-width:1800px;
+  width:100%;
+  margin:0 auto;
+  padding:18px 20px 24px;
+}
+.market-strip {
+  display:grid;
+  grid-template-columns:2.2fr 1fr 1fr 1.2fr;
+  gap:12px;
+  margin-bottom:16px;
+}
+.strip-card, .panel {
+  background:linear-gradient(180deg, rgba(24,31,47,.95), rgba(18,25,40,.98));
+  border:1px solid var(--line);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+}
+.strip-card { padding:14px 16px; }
+.strip-header {
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:flex-start;
+}
+.strip-title {
+  margin:0;
+  font-size:.78rem;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+.strip-value {
+  margin-top:8px;
+  font-size:1.3rem;
+  font-weight:800;
+}
+.strip-sub {
+  margin-top:4px;
+  color:var(--muted);
+  font-size:.84rem;
+}
+.sparkline {
+  height:42px;
+  margin-top:10px;
+  border-radius:10px;
+  background:linear-gradient(180deg, rgba(47,124,246,.12), rgba(47,124,246,0));
+  position:relative;
+  overflow:hidden;
+}
+.sparkline::before {
+  content:"";
+  position:absolute;
+  inset:10px 10px 8px;
+  border-radius:999px;
+  border-top:2px solid rgba(32,184,255,.95);
+  border-right:2px solid transparent;
+  border-left:2px solid transparent;
+  transform:skewX(-16deg) translateY(8px);
+}
+.workspace-grid {
+  display:grid;
+  grid-template-columns:280px minmax(0, 1fr) 370px;
+  gap:16px;
+}
+.panel {
+  overflow:hidden;
+}
+.panel-head {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center;
+  padding:14px 16px;
+  border-bottom:1px solid var(--line-soft);
+  background:linear-gradient(180deg, rgba(255,255,255,.02), transparent);
+}
+.panel-title-wrap h2 {
+  margin:0;
+  font-size:1rem;
+}
+.panel-subtitle {
+  margin-top:4px;
+  font-size:.82rem;
+  color:var(--muted);
+}
+.panel-body { padding:16px; }
+.stack { display:flex; flex-direction:column; gap:16px; }
+.market-list {
+  display:grid;
+  gap:8px;
+}
+.market-chip {
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  align-items:center;
+  padding:10px 12px;
+  border-radius:14px;
+  background:rgba(255,255,255,.02);
+  border:1px solid var(--line-soft);
+}
+.market-chip strong { font-size:.92rem; }
+.market-chip span { color:var(--muted); font-size:.8rem; }
+.watch-note {
+  padding:12px;
+  border-radius:14px;
+  border:1px dashed rgba(255,255,255,.12);
+  background:rgba(255,255,255,.02);
+  color:var(--muted);
+  font-size:.84rem;
+}
+.market-main {
+  display:grid;
+  gap:16px;
+}
+.market-hero {
+  padding:18px;
+}
+.hero-grid {
+  display:grid;
+  grid-template-columns:minmax(0,1.3fr) minmax(0,.7fr);
+  gap:16px;
+}
+.hero-title-row {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:flex-start;
+  margin-bottom:14px;
+}
+.hero-title h2 {
+  margin:0;
+  font-size:1.45rem;
+}
+.hero-title p {
+  margin:6px 0 0;
+  color:var(--muted);
+  font-size:.88rem;
+}
+.market-price {
+  display:flex;
+  gap:16px;
+  align-items:flex-end;
+  margin-bottom:16px;
+}
+.price-main {
+  font-size:2.1rem;
+  font-weight:800;
+  line-height:1;
+}
+.price-change.up { color:var(--green); font-weight:700; }
+.price-change.down { color:var(--red); font-weight:700; }
+.hero-chart {
+  min-height:240px;
+  border-radius:18px;
+  border:1px solid var(--line-soft);
+  background:
+    linear-gradient(180deg, rgba(47,124,246,.12), rgba(47,124,246,.02)),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0 1px, transparent 1px 56px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.04) 0 1px, transparent 1px 72px),
+    linear-gradient(180deg, #11192a, #0c1320);
+  position:relative;
+  overflow:hidden;
+}
+.hero-chart::before {
+  content:"";
+  position:absolute;
+  inset:auto 0 0;
+  height:68%;
+  background:linear-gradient(180deg, rgba(47,124,246,.28), rgba(47,124,246,0));
+  clip-path:polygon(0 86%, 8% 74%, 14% 78%, 20% 63%, 28% 69%, 35% 44%, 43% 56%, 52% 36%, 62% 47%, 70% 30%, 78% 38%, 86% 24%, 94% 28%, 100% 12%, 100% 100%, 0 100%);
+}
+.hero-chart::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg, rgba(255,255,255,.02), transparent 30%);
+}
+.chart-floating-kpis {
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+  gap:10px;
+}
+.stat-tile {
+  border-radius:14px;
+  padding:12px;
+  border:1px solid var(--line-soft);
+  background:rgba(255,255,255,.03);
+}
+.stat-tile .label {
+  font-size:.74rem;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+.stat-tile .value {
+  margin-top:8px;
+  font-size:1.05rem;
+  font-weight:800;
+}
+.kpis-grid {
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:12px;
+}
+.kpi {
+  background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+  border:1px solid var(--line-soft);
+  border-radius:16px;
+  padding:14px;
+}
+.kpi-label { color:var(--muted); font-size:.78rem; text-transform:uppercase; letter-spacing:.08em; }
+.kpi-value { font-size:1.18rem; font-weight:800; margin-top:8px; }
+.pro-tabs {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:14px;
+}
+.pro-tab {
+  padding:9px 12px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.02);
+  font-size:.82rem;
+  color:var(--muted);
+  cursor:pointer;
+  transition:all .16s ease;
+}
+.pro-tab:hover { border-color:rgba(47,124,246,.55); color:var(--text); transform:translateY(-1px); }
+.pro-tab.active { color:var(--text); border-color:rgba(47,124,246,.65); background:rgba(47,124,246,.16); box-shadow:inset 0 0 0 1px rgba(47,124,246,.25), 0 8px 24px rgba(47,124,246,.12); }
+.market-view { display:none; }
+.market-view.active { display:block; }
+.hero-chart canvas {
+  position:relative;
+  z-index:2;
+  display:block;
+  width:100%;
+  height:240px;
+}
+.chart-empty {
+  position:absolute;
+  z-index:3;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  color:var(--muted);
+  font-weight:700;
+  text-align:center;
+  padding:18px;
+}
+.chart-empty.visible { display:flex; }
+.market-pane {
+  min-height:240px;
+  max-height:240px;
+  overflow:auto;
+  border-radius:18px;
+  border:1px solid var(--line-soft);
+  background:linear-gradient(180deg, #11192a, #0c1320);
+  padding:12px;
+}
+.market-pane-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:10px;
+  color:var(--muted);
+  font-size:.82rem;
+}
+.market-pane table { width:100%; font-size:.78rem; }
+.depth-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.depth-side-title {
+  color:var(--muted);
+  font-size:.74rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  margin-bottom:8px;
+}
+.depth-bid { color:var(--green); }
+.depth-ask { color:var(--red); }
+.controls-grid input,
+.controls-grid select { min-width:0; }
+.controls-grid {
+  display:grid;
+  grid-template-columns:repeat(4, minmax(0,1fr));
+  gap:10px;
+}
+label {
+  display:block;
+  margin-bottom:6px;
+  font-size:.76rem;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+input, select, textarea, button {
+  width:100%;
+  font:inherit;
+  color:var(--text);
+  background:#0f1522;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:11px 12px;
+}
+textarea { min-height:88px; resize:vertical; }
+
+.settings-shell {
+  display:grid;
+  gap:18px;
+}
+.settings-alert {
+  border:1px solid rgba(242,164,58,.38);
+  background:rgba(242,164,58,.08);
+  color:#ffd89b;
+  border-radius:16px;
+  padding:14px;
+  line-height:1.45;
+}
+.system-warning {
+  border:1px solid rgba(242,164,58,.45);
+  background:linear-gradient(180deg, rgba(242,164,58,.14), rgba(242,164,58,.07));
+  color:#ffdda6;
+  border-radius:16px;
+  padding:14px 16px;
+  margin:0 0 16px;
+  line-height:1.45;
+  box-shadow:0 14px 28px rgba(0,0,0,.18);
+}
+.system-warning.bad {
+  border-color:rgba(234,57,67,.58);
+  background:linear-gradient(180deg, rgba(234,57,67,.16), rgba(234,57,67,.07));
+  color:#ffc5c9;
+}
+.system-warning.ok {
+  border-color:rgba(22,199,132,.44);
+  background:linear-gradient(180deg, rgba(22,199,132,.13), rgba(22,199,132,.06));
+  color:#b9f6d8;
+}
+.warning-title {
+  font-weight:900;
+  margin-bottom:4px;
+}
+.warning-actions {
+  margin-top:8px;
+  color:var(--muted);
+  font-size:.88rem;
+}
+.settings-toolbar {
+  display:grid;
+  grid-template-columns:minmax(240px, 1fr) auto;
+  gap:12px;
+  align-items:center;
+  margin-bottom:2px;
+}
+.settings-toolbar input {
+  background:rgba(15,21,34,.86);
+}
+.settings-count {
+  color:var(--muted);
+  font-size:.82rem;
+  text-align:right;
+}
+.settings-group {
+  border:1px solid var(--line-soft);
+  background:rgba(255,255,255,.025);
+  border-radius:18px;
+  padding:16px;
+}
+.settings-group h3 {
+  margin:0 0 12px;
+  font-size:.98rem;
+  color:var(--text);
+}
+.settings-list {
+  display:grid;
+  gap:10px;
+}
+.settings-field {
+  min-width:0;
+  display:grid;
+  grid-template-columns:minmax(260px, .92fr) minmax(260px, 1.08fr);
+  gap:14px;
+  align-items:start;
+  border:1px solid rgba(255,255,255,.07);
+  background:rgba(0,0,0,.14);
+  border-radius:16px;
+  padding:13px;
+}
+.settings-field.is-hidden {
+  display:none;
+}
+.settings-meta {
+  min-width:0;
+}
+.settings-key {
+  font-family:ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size:.85rem;
+  color:var(--amber);
+  word-break:break-word;
+  letter-spacing:.02em;
+}
+.settings-label {
+  margin-top:5px;
+  font-size:.95rem;
+  color:var(--text);
+  font-weight:800;
+}
+.settings-description {
+  display:block;
+  margin-top:8px;
+  color:var(--muted);
+  line-height:1.45;
+  font-size:.8rem;
+}
+.settings-type-row {
+  margin-top:8px;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.settings-pill {
+  display:inline-flex;
+  align-items:center;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.04);
+  color:var(--muted);
+  border-radius:999px;
+  padding:4px 8px;
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+.settings-control label {
+  display:block;
+  margin-bottom:7px;
+  color:var(--muted);
+}
+.settings-control input,
+.settings-control select,
+.settings-control textarea {
+  background:#0f1522;
+}
+.settings-control small {
+  display:block;
+  margin-top:6px;
+  color:var(--muted);
+  line-height:1.35;
+  font-size:.74rem;
+}
+.settings-secret-row {
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.settings-secret-row input { flex:1; }
+.settings-secret-status {
+  margin-top:6px;
+  color:var(--amber);
+  font-size:.74rem;
+}
+.settings-actions {
+  position:sticky;
+  bottom:0;
+  z-index:5;
+  display:grid;
+  grid-template-columns:1fr auto auto;
+  gap:10px;
+  align-items:center;
+  padding:14px;
+  border:1px solid var(--line-soft);
+  background:rgba(12,17,27,.92);
+  backdrop-filter:blur(12px);
+  border-radius:18px;
+}
+.settings-status {
+  color:var(--muted);
+  font-size:.86rem;
+}
+.settings-dirty {
+  color:var(--amber);
+}
+@media (max-width: 1100px) {
+  .settings-field { grid-template-columns:1fr; }
+  .settings-toolbar { grid-template-columns:1fr; }
+  .settings-count { text-align:left; }
+  .settings-actions { grid-template-columns:1fr; }
+}
+@media (max-width: 720px) {
+  .settings-field { padding:11px; }
+}
+button {
+  cursor:pointer;
+  border:none;
+  font-weight:800;
+  letter-spacing:.01em;
+  box-shadow:0 8px 20px rgba(0,0,0,.18);
+}
+button.primary { background:linear-gradient(135deg, #2563eb, #2f7cf6); }
+button.secondary { background:linear-gradient(135deg, #263247, #1b2437); }
+button.buy { background:linear-gradient(135deg, #0f9f68, #16c784); }
+button.sell { background:linear-gradient(135deg, #cb3340, #ea3943); }
+button.warn { background:linear-gradient(135deg, #d38e21, #f2a43a); color:#151920; }
+.button-grid {
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+  gap:10px;
+}
+.table-wrap {
+  overflow:auto;
+  border:1px solid var(--line-soft);
+  border-radius:16px;
+  background:rgba(255,255,255,.015);
+}
+table { width:100%; border-collapse:collapse; font-size:.9rem; }
+th, td { padding:12px 10px; text-align:left; border-bottom:1px solid var(--line-soft); vertical-align:top; }
+th { color:var(--muted); font-size:.76rem; text-transform:uppercase; letter-spacing:.08em; background:rgba(255,255,255,.015); position:sticky; top:0; }
+tr:hover td { background:rgba(255,255,255,.02); }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+pre.json {
+  margin:0;
+  padding:14px;
+  border-radius:16px;
+  background:#0f1522;
+  border:1px solid var(--line-soft);
+  white-space:pre-wrap;
+  overflow:auto;
+  max-height:420px;
+}
+.small-note { color:var(--muted); font-size:.84rem; }
+.focus-box { display:grid; gap:14px; }
+.focus-grid { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:10px; }
+.focus-item { padding:12px; border-radius:14px; background:rgba(255,255,255,.03); border:1px solid var(--line-soft); }
+.focus-label { color:var(--muted); font-size:.74rem; text-transform:uppercase; letter-spacing:.08em; }
+.focus-value { margin-top:7px; font-weight:800; word-break:break-word; }
+.decision-buy { color:var(--green); font-weight:800; }
+.decision-sell { color:var(--red); font-weight:800; }
+.decision-hold { color:var(--amber); font-weight:800; }
+.reason-badge {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 9px;
+  border-radius:999px;
+  background:rgba(242,164,58,.12);
+  border:1px solid rgba(242,164,58,.28);
+  color:#ffd08a;
+  font-size:.76rem;
+  font-weight:800;
+  white-space:nowrap;
+}
+.reason-summary {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+  margin-bottom:12px;
+}
+.reason-summary-card {
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid var(--line-soft);
+  background:rgba(255,255,255,.025);
+}
+.reason-summary-label {
+  color:var(--muted);
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+.reason-summary-value {
+  margin-top:6px;
+  font-weight:900;
+}
+.reason-text {
+  max-width:640px;
+  color:var(--text);
+}
+.asset-negative { color:var(--red); font-weight:800; }
+.asset-positive { color:var(--green); font-weight:800; }
+.asset-neutral { color:var(--text); }
+
+.sell-safety-grid {
+  display:grid;
+  grid-template-columns:repeat(5, minmax(0, 1fr));
+  gap:10px;
+  margin-bottom:12px;
+}
+.safety-card {
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid var(--line-soft);
+  background:rgba(255,255,255,.025);
+}
+.safety-label {
+  color:var(--muted);
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+.safety-value {
+  margin-top:6px;
+  font-weight:900;
+}
+.gate-badge {
+  display:inline-flex;
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:.76rem;
+  font-weight:900;
+  white-space:nowrap;
+}
+.gate-badge.allowed { color:#adffd9; background:rgba(22,199,132,.14); border:1px solid rgba(22,199,132,.32); }
+.gate-badge.blocked { color:#ffc0c5; background:rgba(234,57,67,.13); border:1px solid rgba(234,57,67,.32); }
+.hidden { display:none !important; }
+.inline-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.inline-actions button { width:auto; min-width:104px; }
+.order-rail { display:grid; gap:16px; }
+.order-ticket-grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; }
+.order-cta { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; }
+.footer-bar {
+  margin-top:18px;
+  color:var(--muted);
+  font-size:.78rem;
+  text-align:center;
+}
+@media (max-width:1450px) {
+  .market-strip { grid-template-columns:repeat(2, minmax(0,1fr)); }
+  .workspace-grid { grid-template-columns:1fr; }
+  .hero-grid { grid-template-columns:1fr; }
+}
+@media (max-width:980px) {
+  .controls-grid, .kpis-grid, .order-ticket-grid, .focus-grid { grid-template-columns:repeat(2, minmax(0,1fr)); }
+}
+@media (max-width:720px) {
+  .topbar-inner, .workspace { padding-left:14px; padding-right:14px; }
+  .market-strip, .controls-grid, .kpis-grid, .order-ticket-grid, .button-grid, .order-cta, .focus-grid { grid-template-columns:1fr; }
+}
+
+
+/* J & J Ozzy Crypto Bot page cleanup + respectful earth-theme layer.
+   Uses an original desert/rivers/night palette and abstract dots only; no copied cultural artwork or sacred symbols. */
+:root {
+  --bg:#090706;
+  --bg-2:#150f0a;
+  --panel:#17120d;
+  --panel-2:#21170e;
+  --panel-3:#2b1d10;
+  --line:#4b3828;
+  --line-soft:rgba(245,205,143,.11);
+  --text:#fff4df;
+  --muted:#cdb58c;
+  --green:#54d18f;
+  --red:#ff6b5f;
+  --blue:#4db6ac;
+  --cyan:#78d6c6;
+  --amber:#f2aa4c;
+  --ochre:#c8642a;
+  --sand:#f0c987;
+  --ember:#ef7a3c;
+  --shadow:0 20px 50px rgba(0,0,0,.42);
+}
+body {
+  background:
+    radial-gradient(circle at 8% 12%, rgba(200,100,42,.20), transparent 25%),
+    radial-gradient(circle at 84% 7%, rgba(120,214,198,.13), transparent 22%),
+    radial-gradient(circle at 58% 102%, rgba(240,201,135,.12), transparent 28%),
+    linear-gradient(180deg, #090706, #120c07 42%, #060504);
+}
+body::before {
+  background-image:
+    radial-gradient(circle, rgba(240,201,135,.14) 1px, transparent 1.7px),
+    radial-gradient(circle, rgba(200,100,42,.10) 1px, transparent 1.8px),
+    linear-gradient(135deg, rgba(120,214,198,.06), transparent 28%, rgba(239,122,60,.04));
+  background-size:34px 34px, 52px 52px, 100% 100%;
+  background-position:0 0, 18px 12px, 0 0;
+  opacity:.58;
+}
+.topbar { background:rgba(9,7,6,.88); border-bottom:1px solid rgba(240,201,135,.13); }
+.brand-mark {
+  position:relative;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at center, #090706 0 22%, transparent 23%),
+    conic-gradient(from 12deg, #c8642a, #f0c987, #78d6c6, #ef7a3c, #c8642a);
+  box-shadow:0 0 0 3px rgba(240,201,135,.16), 0 16px 38px rgba(200,100,42,.30);
+}
+.brand-mark::before,
+.brand-mark::after {
+  content:"";
+  position:absolute;
+  border-radius:999px;
+  inset:8px;
+  border:2px dotted rgba(255,244,223,.78);
+}
+.brand-mark::after {
+  inset:18px;
+  border:0;
+  background:#f0c987;
+  box-shadow:0 0 0 4px rgba(9,7,6,.85);
+}
+.brand-copy h1 { font-size:1.18rem; letter-spacing:.035em; text-transform:uppercase; }
+.brand-copy p { color:#d8c19b; }
+.ribbon-pill, .runtime-card, .stat-tile, .kpi, .safety-card, .reason-summary-card, .focus-item {
+  background:linear-gradient(180deg, rgba(240,201,135,.07), rgba(255,255,255,.025));
+  border-color:rgba(240,201,135,.15);
+}
+.strip-card, .panel {
+  background:linear-gradient(180deg, rgba(36,25,15,.96), rgba(18,13,9,.98));
+  border-color:rgba(240,201,135,.16);
+}
+button.primary, button.buy { background:linear-gradient(135deg, #c8642a, #f2aa4c); color:#140b05; }
+button.secondary { background:rgba(240,201,135,.08); color:var(--text); border-color:rgba(240,201,135,.18); }
+button.warn { background:linear-gradient(135deg, #7b3f1c, #c8642a); color:#fff4df; }
+button.sell { background:linear-gradient(135deg, #8e2f2a, #ff6b5f); color:#fff4df; }
+.page-nav {
+  display:grid;
+  grid-template-columns:repeat(7, minmax(0, 1fr));
+  gap:10px;
+  margin:0 0 16px;
+  position:sticky;
+  top:72px;
+  z-index:15;
+  padding:10px;
+  border:1px solid rgba(240,201,135,.14);
+  border-radius:20px;
+  background:rgba(12,9,6,.82);
+  backdrop-filter:blur(14px);
+  box-shadow:0 18px 45px rgba(0,0,0,.28);
+}
+.page-tab {
+  min-height:64px;
+  text-align:left;
+  justify-content:flex-start;
+  border-radius:16px;
+  background:linear-gradient(180deg, rgba(240,201,135,.08), rgba(255,255,255,.02));
+  border:1px solid rgba(240,201,135,.14);
+  color:var(--muted);
+}
+.page-tab span { display:block; font-weight:900; color:var(--text); font-size:.94rem; letter-spacing:.02em; }
+.page-tab small { display:block; margin-top:4px; color:var(--muted); font-size:.72rem; font-weight:700; }
+.page-tab.active {
+  background:linear-gradient(135deg, rgba(200,100,42,.36), rgba(120,214,198,.12));
+  border-color:rgba(240,201,135,.40);
+  box-shadow:inset 0 0 0 1px rgba(255,244,223,.06), 0 12px 30px rgba(200,100,42,.16);
+}
+.paged-ui .workspace-grid {
+  display:block;
+}
+.paged-ui .workspace-grid > aside,
+.paged-ui .workspace-grid > section,
+.paged-ui .market-main,
+.paged-ui .order-rail,
+.paged-ui aside.stack {
+  display:contents;
+}
+.paged-ui .panel[data-ui-page] {
+  margin-bottom:16px;
+}
+.paged-ui .panel.ui-page-hidden {
+  display:none !important;
+}
+.paged-ui .panel[data-ui-page="markets"] .hero-grid {
+  grid-template-columns:minmax(0, 1fr) 320px;
+}
+.paged-ui .market-hero { min-height:520px; }
+.paged-ui .hero-chart { min-height:360px; }
+.paged-ui .panel-head {
+  border-bottom-color:rgba(240,201,135,.13);
+}
+.page-kicker {
+  margin:2px 0 16px;
+  padding:14px 16px;
+  border:1px solid rgba(240,201,135,.14);
+  border-radius:18px;
+  background:linear-gradient(135deg, rgba(200,100,42,.16), rgba(120,214,198,.06));
+  color:var(--muted);
+  display:none;
+}
+.paged-ui .page-kicker { display:block; }
+.page-kicker strong { color:var(--text); }
+.footer-bar { color:#b99d73; }
+@media (max-width:1150px) {
+  .page-nav { grid-template-columns:repeat(3, minmax(0, 1fr)); top:84px; }
+  .paged-ui .panel[data-ui-page="markets"] .hero-grid { grid-template-columns:1fr; }
+}
+@media (max-width:720px) {
+  .page-nav { grid-template-columns:1fr 1fr; position:static; }
+  .page-tab { min-height:56px; }
+}
+
+
+/* Initial page state: only overview panels show before JS activates tabs. */
+.panel[data-ui-page]:not([data-ui-page="overview"]) { display:none; }
+body.paged-ui .panel[data-ui-page] { display:block; }
+body.paged-ui .panel[data-ui-page].ui-page-hidden { display:none !important; }
+
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        <div class="brand-copy">
+          <h1>J &amp; J Ozzy Crypto Bot</h1>
+          <p>Customer trading console with paper trading, guarded controls, and approval for live mode.</p>
+        </div>
+      </div>
+      <div class="ribbon">
+        <div class="ribbon-pill"><div class="ribbon-label">Environment</div><div class="ribbon-value">{{ app_env }}</div></div>
+        <div class="ribbon-pill"><div class="ribbon-label">Dry Run</div><div class="ribbon-value">{{ dry_run_text }}</div></div>
+        <div class="ribbon-pill"><div class="ribbon-label">Pairs Mode</div><div class="ribbon-value">{{ pair_mode }}</div></div>
+        <div class="ribbon-pill"><div class="ribbon-label">Default TF</div><div class="ribbon-value">{{ default_timeframe }}</div></div>
+        <div class="ribbon-pill"><div class="ribbon-label">Server</div><div class="ribbon-value status-light-row"><span class="status-light-dot" id="server-light"></span><span id="server-state">Checking</span></div></div>
+        <div class="ribbon-pill"><div class="ribbon-label">Balance</div><div class="ribbon-value" id="balance-strip">-</div></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <section class="market-strip">
+      <div class="strip-card">
+        <div class="strip-header">
+          <div>
+            <div class="strip-title">Selected market</div>
+            <div class="strip-value mono" id="strip-market-symbol">{{ default_pair }}</div>
+            <div class="strip-sub">All-pairs universe, AI shortlist, live execution guard.</div>
+          </div>
+        </div>
+        <div class="sparkline"></div>
+      </div>
+      <div class="strip-card">
+        <div class="strip-title">Last price</div>
+        <div class="strip-value" id="ticker-last-strip">-</div>
+        <div class="strip-sub">Streaming snapshot</div>
+      </div>
+      <div class="strip-card">
+        <div class="strip-title">24h volume</div>
+        <div class="strip-value" id="ticker-volume-strip">-</div>
+        <div class="strip-sub">Liquidity check</div>
+      </div>
+      <div class="strip-card">
+        <div class="strip-title">Bot mode</div>
+        <div class="strip-value" id="kpi-mode-strip">-</div>
+        <div class="strip-sub">Paper/live state and current controls</div>
+      </div>
+    </section>
+
+    <nav class="page-nav" aria-label="J and J Ozzy Crypto Bot pages">
+      <button type="button" class="page-tab active" data-page-target="overview" onclick="showDashboardPage('overview')"><span>Command</span><small>start, mode, account</small></button>
+      <button type="button" class="page-tab" data-page-target="markets" onclick="showDashboardPage('markets')"><span>Markets</span><small>chart, depth, tape</small></button>
+      <button type="button" class="page-tab" data-page-target="safety" onclick="showDashboardPage('safety')"><span>Safety</span><small>sell gate, no-trade</small></button>
+      <button type="button" class="page-tab" data-page-target="activity" onclick="showDashboardPage('activity')"><span>Decisions</span><small>feed, open orders</small></button>
+      <button type="button" class="page-tab" data-page-target="trade" onclick="showDashboardPage('trade')"><span>Trade Desk</span><small>manual guarded orders</small></button>
+      <button type="button" class="page-tab" data-page-target="settings" onclick="showDashboardPage('settings')"><span>Settings</span><small>config, local setup</small></button>
+      <button type="button" class="page-tab" data-page-target="apply" onclick="showDashboardPage('apply')"><span>Apply</span><small>customer approval</small></button>
+    </nav>
+    <div class="page-kicker" id="page-kicker"><strong>Command:</strong> Start, stop, mode, account, and live readiness in one clean page.</div>
+
+    <div class="system-warning hidden" id="connection-warning">
+      <div class="warning-title" id="connection-warning-title">Kraken connection warning</div>
+      <div id="connection-warning-body">Checking Kraken API and market-data status...</div>
+      <div class="warning-actions" id="connection-warning-actions">Open Settings to enter Kraken API keys. Public market candles/tickers should still work without private API keys.</div>
+    </div>
+
+    <section class="workspace-grid">
+      <aside class="stack">
+        <section class="panel" data-ui-page="markets">
+          <div class="panel-head">
+            <div class="panel-title-wrap">
+              <h2>Markets</h2>
+              <div class="panel-subtitle">Watchlist rail for protected micro-pairs, leaders, and AI focus markets.</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="market-list" id="market-rail-list">
+              <div class="market-chip"><div><strong class="mono">{{ default_pair }}</strong><br><span>Focused market</span></div><span id="ticker-last-chip">-</span></div>
+              <div class="market-chip"><div><strong class="mono">XBT/USD</strong><br><span>Macro benchmark</span></div><span id="ticker-bid-chip">-</span></div>
+              <div class="market-chip"><div><strong class="mono">SOL/USD</strong><br><span>Momentum monitor</span></div><span id="ticker-ask-chip">-</span></div>
+            </div>
+            <div class="watch-note" id="market-rail-note" style="margin-top:12px;">J &amp; J scanner view: only pairs that pass liquidity, momentum, fee, and no-chase guards should make it into live trading.</div>
+          </div>
+        </section>
+
+        <section class="panel" data-ui-page="overview">
+          <div class="panel-head">
+            <div class="panel-title-wrap">
+              <h2>Bot Controls</h2>
+              <div class="panel-subtitle">Fast start/stop, mode switching, pair refresh, and cycle execution.</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="button-grid">
+              <button class="primary" onclick="safeAction(startBot)">Start Bot</button>
+              <button class="secondary" onclick="safeAction(stopBot)">Stop Bot</button>
+              <button class="warn" onclick="safeAction(runBotOnce)">Run Once</button>
+              <button class="secondary" onclick="safeAction(refreshAll)">Refresh</button>
+            </div>
+            <div class="button-grid" style="margin-top:10px;">
+              <button class="buy" onclick="safeAction(() => setMode('paper'))">Paper Mode</button>
+              <button class="sell" onclick="safeAction(() => setMode('live'))">Live Mode</button>
+              <button class="secondary" onclick="safeAction(refreshPairs)" style="grid-column:span 2;">Refresh Pairs</button>
+            </div>
+
+            <div class="runtime-grid">
+              <div class="runtime-card"><div class="runtime-label">Server</div><div class="runtime-value status-light-row"><span class="status-light-dot" id="server-light-card"></span><span id="server-state-card">Checking</span></div></div>
+              <div class="runtime-card"><div class="runtime-label">Approval</div><div class="runtime-value warn" id="runtime-approval">Paper Only</div></div>
+              <div class="runtime-card"><div class="runtime-label">Kraken API</div><div class="runtime-value warn" id="runtime-api">Checking</div></div>
+              <div class="runtime-card"><div class="runtime-label">Balance</div><div class="runtime-value" id="runtime-balance">-</div></div>
+              <div class="runtime-card"><div class="runtime-label">Loop</div><div class="runtime-value" id="runtime-running">-</div></div>
+              <div class="runtime-card"><div class="runtime-label">Auto resume</div><div class="runtime-value" id="runtime-desired">-</div></div>
+              <div class="runtime-card"><div class="runtime-label">Last stop</div><div class="runtime-value" id="runtime-stop-reason">-</div></div>
+            </div>
+            <div class="watch-note" id="customer-approval-summary" style="margin-top:12px;">Customer approval: paper mode is available. Live mode stays locked until approval.</div>
+            <div class="watch-note" id="production-readiness-summary" style="margin-top:12px;">Production readiness: loading...</div>
+            <pre class="json" id="production-readiness-box" style="margin-top:10px; max-height:220px; overflow:auto;">Loading production readiness...</pre>
+            <div class="watch-note" id="license-status-summary" style="margin-top:12px;">License: loading...</div>
+            <pre class="json" id="license-status-box" style="margin-top:10px; max-height:180px; overflow:auto;">Loading license status...</pre>
+            <pre class="json" id="bot-status-box" style="margin-top:14px;">Loading bot status...</pre>
+          </div>
+        </section>
+      </aside>
+
+      <section class="market-main">
+        <section class="panel market-hero">
+          <div class="hero-grid">
+            <div>
+              <div class="hero-title-row">
+                <div class="hero-title">
+                  <h2 id="market-title">Live Market Snapshot</h2>
+                  <p id="market-note">Live market workspace with candles, depth, trades, and guard context.</p>
+                </div>
+                <div class="pro-tabs" role="tablist" aria-label="Market snapshot tabs">
+                  <button type="button" class="pro-tab active" id="market-tab-chart" onclick="safeAction(() => setMarketPane('chart'))">Chart</button>
+                  <button type="button" class="pro-tab" id="market-tab-depth" onclick="safeAction(() => setMarketPane('depth'))">Depth</button>
+                  <button type="button" class="pro-tab" id="market-tab-trades" onclick="safeAction(() => setMarketPane('trades'))">Trades</button>
+                  <button type="button" class="pro-tab" id="market-tab-orders" onclick="safeAction(() => setMarketPane('orders'))">Orders</button>
+                </div>
+              </div>
+              <div class="system-warning hidden" id="market-data-warning" style="margin:12px 0 14px;">
+                <div class="warning-title">Live market data warning</div>
+                <div id="market-data-warning-body">No live market data loaded.</div>
+              </div>
+              <div class="market-price">
+                <div class="price-main" id="ticker-last">-</div>
+                <div class="price-change up" id="ticker-last-change">Live</div>
+              </div>
+              <div class="market-view active" id="market-view-chart">
+                <div class="hero-chart">
+                  <canvas id="market-candle-canvas" aria-label="Live candlestick chart"></canvas>
+                  <div class="chart-empty" id="chart-empty">No candle data loaded. Press Load Market.</div>
+                </div>
+              </div>
+              <div class="market-view" id="market-view-depth">
+                <div class="market-pane">
+                  <div class="market-pane-head"><strong>Order Book Depth</strong><span id="depth-updated">-</span></div>
+                  <div class="depth-grid">
+                    <div>
+                      <div class="depth-side-title depth-bid">Bids</div>
+                      <table><thead><tr><th>Price</th><th>Volume</th><th>Total</th></tr></thead><tbody id="depth-bids-body"><tr><td colspan="3">Load depth.</td></tr></tbody></table>
+                    </div>
+                    <div>
+                      <div class="depth-side-title depth-ask">Asks</div>
+                      <table><thead><tr><th>Price</th><th>Volume</th><th>Total</th></tr></thead><tbody id="depth-asks-body"><tr><td colspan="3">Load depth.</td></tr></tbody></table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="market-view" id="market-view-trades">
+                <div class="market-pane">
+                  <div class="market-pane-head"><strong>Recent Kraken Trades</strong><span id="recent-trades-updated">-</span></div>
+                  <table><thead><tr><th>Time</th><th>Side</th><th>Price</th><th>Volume</th><th>Type</th></tr></thead><tbody id="recent-trades-body"><tr><td colspan="5">Load trades.</td></tr></tbody></table>
+                </div>
+              </div>
+              <div class="market-view" id="market-view-orders">
+                <div class="market-pane">
+                  <div class="market-pane-head"><strong>Live Open Orders</strong><span id="market-orders-updated">-</span></div>
+                  <table><thead><tr><th>Order</th><th>Pair</th><th>Side</th><th>Type</th><th>Price</th><th>Vol</th><th>Filled</th><th>Status</th></tr></thead><tbody id="market-orders-body"><tr><td colspan="8">No open orders loaded.</td></tr></tbody></table>
+                </div>
+              </div>
+            </div>
+            <div class="stack">
+              <div class="chart-floating-kpis">
+                <div class="stat-tile"><div class="label">Bid</div><div class="value" id="ticker-bid">-</div></div>
+                <div class="stat-tile"><div class="label">Ask</div><div class="value" id="ticker-ask">-</div></div>
+                <div class="stat-tile"><div class="label">Volume</div><div class="value" id="ticker-volume">-</div></div>
+                <div class="stat-tile"><div class="label">Timeframe</div><div class="value" id="market-timeframe-display">{{ default_timeframe }}</div></div>
+              </div>
+
+              <div>
+                <div class="panel-subtitle" style="margin-bottom:10px;">Market controls</div>
+                <div class="controls-grid">
+                  <div>
+                    <label for="market-symbol">Symbol</label>
+                    <input id="market-symbol" value="{{ default_pair }}">
+                  </div>
+                  <div>
+                    <label for="market-timeframe">Timeframe</label>
+                    <select id="market-timeframe">
+                      <option value="1m">1m</option>
+                      <option value="5m">5m</option>
+                      <option value="15m">15m</option>
+                      <option value="30m">30m</option>
+                      <option value="1h" selected>1h</option>
+                      <option value="4h">4h</option>
+                      <option value="1d">1d</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="market-limit">OHLCV Limit</label>
+                    <input id="market-limit" type="number" min="1" max="720" value="20">
+                  </div>
+                  <div style="display:flex;align-items:end;">
+                    <button class="primary" onclick="safeAction(loadMarket)">Load Market</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div class="panel-title-wrap">
+              <h2 id="account-title">Account Overview</h2>
+              <div class="panel-subtitle" id="account-note">Paper trading uses live Kraken market data for prices and candles. Live Kraken balances can still be shown separately as reference.</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="system-warning hidden" id="account-data-warning" style="margin-bottom:14px;">
+              <div class="warning-title">Kraken API / live account data warning</div>
+              <div id="account-data-warning-body">No live account warning loaded.</div>
+              <div class="warning-actions">Paper mode remains available. Enter both Kraken API fields in Settings to unlock live balances/open orders; only turn DRY_RUN off when ready for real live trading.</div>
+            </div>
+            <div class="kpis-grid">
+              <div class="kpi"><div class="kpi-label">Mode</div><div class="kpi-value" id="kpi-mode">-</div></div>
+              <div class="kpi"><div class="kpi-label" id="kpi-cash-label">Cash</div><div class="kpi-value" id="kpi-cash">-</div></div>
+              <div class="kpi"><div class="kpi-label" id="kpi-equity-label">Total Equity</div><div class="kpi-value" id="kpi-equity">-</div></div>
+              <div class="kpi"><div class="kpi-label" id="kpi-assets-label">Assets Value</div><div class="kpi-value" id="kpi-assets-total">-</div></div>
+              <div class="kpi"><div class="kpi-label" id="kpi-trade-label">Trade Count</div><div class="kpi-value" id="kpi-trades">-</div></div>
+            </div>
+
+            <div class="table-wrap" style="margin-top:16px;">
+              <table>
+                <thead id="positions-head-paper">
+                  <tr>
+                    <th>Symbol</th>
+                    <th>Qty</th>
+                    <th>Avg Price</th>
+                    <th>Market Price</th>
+                    <th>Value</th>
+                    <th>PnL</th>
+                  </tr>
+                </thead>
+                <thead id="positions-head-live" class="hidden">
+                  <tr>
+                    <th>Asset</th>
+                    <th>Available</th>
+                    <th>Balance</th>
+                    <th>Held</th>
+                    <th>Credit</th>
+                    <th>Credit Used</th>
+                  </tr>
+                </thead>
+                <tbody id="positions-body"><tr><td colspan="6">No account data loaded.</td></tr></tbody>
+              </table>
+            </div>
+
+            <div id="live-trade-balance-wrap" class="hidden" style="margin-top:16px;">
+              <div class="panel-subtitle" style="margin-bottom:10px;">Live trade balance summary</div>
+              <pre class="json" id="live-trade-balance-box">No live trade balance loaded.</pre>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-ui-page="markets">
+          <div class="panel-head">
+            <div class="panel-title-wrap">
+              <h2>Market Data Tape</h2>
+              <div class="panel-subtitle">Recent candles in a pro-style lower workspace panel.</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Timestamp</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>Volume</th></tr></thead>
+                <tbody id="ohlcv-body"><tr><td colspan="6">No candle data loaded.</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <section class="panel" data-ui-page="safety">
+          <div class="panel-head">
+            <div class="panel-title-wrap">
+              <h2>Sell Safety / Break-even</h2>
+              <div class="panel-subtitle">Buy cost → Kraken fees → break-even sell price → current sell value → allowed/blocked.</div>
+            </div>
+            <div class="inline-actions">
+              <button class="secondary" onclick="safeAction(loadSellSafety)">Refresh</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="sell-safety-grid">
+              <div class="safety-card"><div class="safety-label">Positions</div><div class="safety-value" id="sell-safe-positions">0</div></div>
+              <div class="safety-card"><div class="safety-label">Allowed</div><div class="safety-value asset-positive" id="sell-safe-allowed">0</div></div>
+              <div class="safety-card"><div class="safety-label">Blocked</div><div class="safety-value asset-negative" id="sell-safe-blocked">0</div></div>
+              <div class="safety-card"><div class="safety-label">Min Profit</div><div class="safety-value" id="sell-safe-min-profit">-</div></div>
+              <div class="safety-card"><div class="safety-label">Updated</div><div class="safety-value mono" id="sell-safe-updated">-</div></div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Pair</th><th>Buy Cost</th><th>Kraken Fees</th><th>Break-even Sell</th><th>Current Sell Net</th><th>Net P/L</th><th>Gate</th></tr></thead>
+                <tbody id="sell-safety-body"><tr><td colspan="7">No live sell safety data loaded.</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-ui-page="safety">
+          <div class="panel-head">
+            <div class="panel-title-wrap">
+              <h2>Why No Trade?</h2>
+              <div class="panel-subtitle">Live skip reasons from the bot’s last cycles, grouped by the rule that blocked entry.</div>
+            </div>
+            <div class="inline-actions">
+              <button class="secondary" onclick="safeAction(loadNoTradeReasons)">Refresh</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="reason-summary" id="no-trade-summary">
+              <div class="reason-summary-card"><div class="reason-summary-label">Latest Cycle</div><div class="reason-summary-value" id="no-trade-cycle">-</div></div>
+              <div class="reason-summary-card"><div class="reason-summary-label">Recent Blocks</div><div class="reason-summary-value" id="no-trade-count">0</div></div>
+              <div class="reason-summary-card"><div class="reason-summary-label">Top Reason</div><div class="reason-summary-value" id="no-trade-top">-</div></div>
+              <div class="reason-summary-card"><div class="reason-summary-label">Last Updated</div><div class="reason-summary-value mono" id="no-trade-updated">-</div></div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Time</th><th>Symbol</th><th>Rule</th><th>Action</th><th>Reason</th></tr></thead>
+                <tbody id="no-trade-body"><tr><td colspan="5">No no-trade reasons yet. Start or run the bot once.</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-ui-page="activity">
+          <div class="panel-head">
+            <div class="panel-title-wrap">
+              <h2>Decision Feed</h2>
+              <div class="panel-subtitle">Recent AI/bot decisions, open orders, and paper trade history.</div>
+            </div>
+          </div>
+          <div class="panel-body stack">
+            <div>
+              <div class="small-note" style="margin-bottom:10px;">Click any row to inspect the decision payload in the right rail.</div>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Symbol</th><th>Action</th><th>Confidence</th><th>Last Price</th><th>Reason</th><th>Order</th></tr></thead>
+                  <tbody id="decisions-body"><tr><td colspan="6">No decisions yet.</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="panel-subtitle" id="activity-title" style="margin-bottom:10px;">Recent Paper Trades</div>
+            <div id="paper-trades-wrap" class="table-wrap">
+              <table>
+                <thead><tr><th>ID</th><th>Symbol</th><th>Side</th><th>Amount</th><th>Price</th><th>Fee</th><th>Status</th><th>Time</th></tr></thead>
+                <tbody id="trades-body"><tr><td colspan="8">No paper trades yet.</td></tr></tbody>
+              </table>
+            </div>
+            <div class="table-wrap hidden" id="live-open-orders-wrap">
+              <table>
+                <thead><tr><th>Order ID</th><th>Pair</th><th>Type</th><th>Order Type</th><th>Price</th><th>Volume</th><th>Filled</th><th>Status</th></tr></thead>
+                <tbody id="live-open-orders-body"><tr><td colspan="8">No live open orders loaded.</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <aside class="order-rail">
+        <section class="panel" data-ui-page="trade">
+          <div class="panel-head">
+            <div class="panel-title-wrap">
+              <h2>Order Ticket</h2>
+              <div class="panel-subtitle">Manual test rail protected by the same live order firewall.</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="order-ticket-grid">
+              <div><label for="order-symbol">Symbol</label><input id="order-symbol" value="{{ default_pair }}"></div>
+              <div><label for="order-side">Side</label><select id="order-side"><option value="buy">buy</option><option value="sell">sell</option></select></div>
+              <div><label for="order-type">Order Type</label><select id="order-type" onchange="toggleLimitPrice()"><option value="market">market</option><option value="limit">limit</option></select></div>
+              <div><label for="order-amount">Amount</label><input id="order-amount" type="number" min="0" step="0.00000001" value="0.001"></div>
+              <div id="limit-price-wrap" style="display:none"><label for="order-limit-price">Limit Price</label><input id="order-limit-price" type="number" min="0" step="0.00000001"></div>
+              <div><label for="order-strategy">Strategy</label><input id="order-strategy" value="manual-ui"></div>
+            </div>
+            <div style="margin-top:10px;"><label for="order-notes">Notes</label><textarea id="order-notes" placeholder="Optional note for this trade"></textarea></div>
+            <div class="order-cta" style="margin-top:14px;">
+              <button class="buy" onclick="safeAction(() => submitOrder('paper'))">Paper Order</button>
+              <button class="sell" onclick="safeAction(() => submitOrder('live'))">Live Order</button>
+            </div>
+            <pre class="json" id="order-result-box" style="margin-top:14px;">No order submitted yet.</pre>
+          </div>
+        </section>
+
+        <section class="panel" data-ui-page="trade">
+          <div class="panel-head">
+            <div class="panel-title-wrap">
+              <h2>Pair Decision Inspector</h2>
+              <div class="panel-subtitle">Deep dive on the latest selected decision payload.</div>
+            </div>
+            <div class="inline-actions">
+              <button class="secondary" onclick="focusLatestDecision()">Latest</button>
+              <button class="secondary" onclick="focusSelectedDecision()">Use Symbol</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="focus-box">
+              <div class="focus-grid">
+                <div class="focus-item"><div class="focus-label">Pair</div><div class="focus-value mono" id="focus-symbol">-</div></div>
+                <div class="focus-item"><div class="focus-label">Action</div><div class="focus-value" id="focus-action">-</div></div>
+                <div class="focus-item"><div class="focus-label">Confidence</div><div class="focus-value" id="focus-confidence">-</div></div>
+                <div class="focus-item"><div class="focus-label">Last Price</div><div class="focus-value" id="focus-last-price">-</div></div>
+                <div class="focus-item"><div class="focus-label">Risk Fraction</div><div class="focus-value" id="focus-risk">-</div></div>
+                <div class="focus-item"><div class="focus-label">Executed Order</div><div class="focus-value" id="focus-order-status">-</div></div>
+              </div>
+              <div>
+                <div class="focus-label" style="margin-bottom:8px;">Reason</div>
+                <pre class="json" id="focus-reason">No decision selected.</pre>
+              </div>
+              <div>
+                <div class="focus-label" style="margin-bottom:8px;">Collected Pair Data</div>
+                <pre class="json" id="focus-payload">No pair data loaded.</pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-ui-page="settings">
+          <div class="panel-head">
+            <div class="panel-title-wrap">
+              <h2>Settings</h2>
+              <div class="panel-subtitle">Edit guarded bot variables, Kraken API keys, fee floors, and entry firewall settings.</div>
+            </div>
+            <div class="inline-actions">
+              <button class="secondary" onclick="safeAction(loadSettingsEditor)">Reload</button>
+              <button class="primary" onclick="safeAction(submitSettingsForm)">Apply</button>
+            </div>
+          </div>
+          <div class="panel-body settings-shell">
+            <div class="settings-alert">
+              Kraken API keys are saved to your local <span class="mono">.env</span> only and are never displayed back in full. Leave secret fields blank to keep the existing saved value. Use a trading-only Kraken key with withdrawals disabled.
+            </div>
+            <div class="settings-toolbar">
+              <input id="settings-search" type="text" placeholder="Search variables, labels, or descriptions..." oninput="filterSettingsVariables()">
+              <div id="settings-count" class="settings-count">Loading variables...</div>
+            </div>
+            <form id="settings-form" class="settings-shell" onsubmit="event.preventDefault(); safeAction(submitSettingsForm);">
+              <div id="settings-form-body" class="settings-shell">Loading editable settings...</div>
+              <div class="settings-actions">
+                <div id="settings-save-status" class="settings-status">No changes applied yet.</div>
+                <button type="button" class="secondary" onclick="safeAction(loadSettingsEditor)">Discard / Reload</button>
+                <button type="submit" class="primary">Apply Settings</button>
+              </div>
+            </form>
+            <details>
+              <summary class="settings-status">Raw config summary</summary>
+              <pre class="json" id="config-box">Loading config...</pre>
+            </details>
+          </div>
+        </section>
+      </aside>
+    </section>
+
+
+
+    <section class="panel" data-ui-page="apply">
+      <div class="panel-head">
+        <div class="panel-title-wrap">
+          <h2>Apply</h2>
+          <div class="panel-subtitle">Customer approval request. Paper trading stays available while live mode waits for approval.</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="watch-note">
+          Enter the customer's email and name. Enter the customer's email and name to request approval for live mode.
+        </div>
+
+        <div class="runtime-grid" style="margin-top:14px;">
+          <div class="runtime-card">
+            <div class="runtime-label">Approval</div>
+            <div class="runtime-value warn" id="customer-approval-state">Paper Only</div>
+          </div>
+          <div class="runtime-card">
+            <div class="runtime-label">Install ID</div>
+            <div class="runtime-value mono" id="customer-install-id">-</div>
+          </div>
+        </div>
+
+        <div class="form-grid" style="margin-top:14px;">
+          <label>Customer email
+            <input id="customer-approval-email" type="email" placeholder="customer@email.com" autocomplete="email">
+          </label>
+          <label>Customer name
+            <input id="customer-approval-name" type="text" placeholder="Customer name" autocomplete="name">
+          </label>
+        </div>
+
+        <div class="button-row" style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="primary" type="button" onclick="requestCustomerApproval()">Send Approval Request</button>
+          <button class="secondary" type="button" onclick="checkCustomerApproval()">Check Approval</button>
+          <button class="secondary" type="button" onclick="saveCustomerApprovalFields()">Save Details</button>
+        </div>
+
+        <pre class="json" id="customer-approval-box" style="margin-top:14px; max-height:260px; overflow:auto;">Customer approval ready.</pre>
+      </div>
+    </section>
+
+    <div class="footer-bar">J &amp; J Ozzy Crypto Bot — customer build with guarded paper trading and approval-controlled live mode.</div>
+  </main>
+</div>
+<script>
+
+const DASHBOARD_PAGES = {
+  overview: {
+    label: 'Command',
+    note: 'Start/stop, mode control, account summary, and runtime state in one clean command page.',
+    panels: ['Bot Controls', 'Account Overview']
+  },
+  markets: {
+    label: 'Markets',
+    note: 'Watchlist, live candles, depth, recent trades, and market-data tape.',
+    panels: ['Markets', 'Live Market Snapshot', 'Market Data Tape']
+  },
+  safety: {
+    label: 'Safety',
+    note: 'Fee-aware sell gate, blocked exits, no-trade reasons, and entry firewall feedback.',
+    panels: ['Sell Safety / Break-even', 'Why No Trade?']
+  },
+  activity: {
+    label: 'Decisions',
+    note: 'Decision feed, paper/live order activity, and recent bot reasoning.',
+    panels: ['Decision Feed']
+  },
+  trade: {
+    label: 'Trade Desk',
+    note: 'Manual order ticket and pair inspector. Live manual orders stay protected by the same firewall.',
+    panels: ['Order Ticket', 'Pair Decision Inspector']
+  },
+  settings: {
+    label: 'Settings',
+    note: 'Configuration, readiness JSON, and raw bot status for testing and support.',
+    panels: ['Settings']
+  },
+  apply: {
+    label: 'Apply',
+    note: 'Customer approval request and approval status.',
+    panels: ['Apply']
+  }
+};
+
+function findPanelByTitle(title) {
+  const headings = Array.from(document.querySelectorAll('.panel h2'));
+  const heading = headings.find(h => String(h.textContent || '').trim() === title);
+  return heading ? heading.closest('.panel') : null;
+}
+
+function setupDashboardPages() {
+  document.body.classList.add('paged-ui');
+  Object.entries(DASHBOARD_PAGES).forEach(([page, cfg]) => {
+    (cfg.panels || []).forEach(title => {
+      const panel = findPanelByTitle(title);
+      if (panel) panel.dataset.uiPage = page;
+    });
+  });
+
+  const controls = findPanelByTitle('Bot Controls');
+  const readiness = document.getElementById('production-readiness-box');
+  const license = document.getElementById('license-status-box');
+  const status = document.getElementById('bot-status-box');
+  if (controls && readiness && license && status) {
+    controls.dataset.uiPage = 'overview';
+  }
+
+  const lastPage = localStorage.getItem('jj_ozzy_page') || 'overview';
+  showDashboardPage(DASHBOARD_PAGES[lastPage] ? lastPage : 'overview');
+}
+
+function showDashboardPage(page) {
+  const active = DASHBOARD_PAGES[page] ? page : 'overview';
+  localStorage.setItem('jj_ozzy_page', active);
+  document.querySelectorAll('.page-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.pageTarget === active);
+  });
+  document.querySelectorAll('.panel[data-ui-page]').forEach(panel => {
+    panel.classList.toggle('ui-page-hidden', panel.dataset.uiPage !== active);
+  });
+  const kicker = document.getElementById('page-kicker');
+  if (kicker) {
+    kicker.innerHTML = `<strong>${DASHBOARD_PAGES[active].label}:</strong> ${DASHBOARD_PAGES[active].note}`;
+  }
+  if (active === 'markets') setTimeout(() => drawCandleChart(), 80);
+  if (active === 'settings' && !settingsEditorLoaded) {
+    setTimeout(() => safeAction(loadSettingsEditor), 60);
+  }
+}
+
+let latestBotStatus = null;
+let latestConnectionStatus = null;
+let latestDecisionMap = {};
+let latestUnifiedDecisions = [];
+let latestOpenOrderActions = [];
+let latestNoTradeReasons = [];
+let latestSellSafety = null;
+let latestCandles = [];
+let latestDepth = null;
+let latestRecentTrades = [];
+let currentMarketPane = 'chart';
+
+
+
+function normalizeMarketSymbol(value) {
+  const raw = String(value || '').trim().toUpperCase().replace('-', '/');
+  if (!raw) return 'XBT/USD';
+  if (raw.includes('/')) return raw;
+  if (raw.endsWith('USD')) return `${raw.slice(0, -3)}/USD`;
+  if (raw.endsWith('AUD')) return `${raw.slice(0, -3)}/AUD`;
+  return raw;
+}
+
+function currentMarketSymbol() {
+  const input = document.getElementById('market-symbol');
+  const normalized = normalizeMarketSymbol(input?.value || 'XBT/USD');
+  if (input && input.value !== normalized) input.value = normalized;
+  return normalized;
+}
+
+function formatPriceForAxis(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return '-';
+  if (Math.abs(num) >= 1000) return num.toFixed(1);
+  if (Math.abs(num) >= 1) return num.toFixed(4);
+  if (Math.abs(num) >= 0.01) return num.toFixed(6);
+  return num.toPrecision(6);
+}
+
+function resizeMarketCanvas() {
+  const canvas = document.getElementById('market-candle-canvas');
+  if (!canvas) return;
+  const rect = canvas.getBoundingClientRect();
+  const ratio = Math.max(1, window.devicePixelRatio || 1);
+  const width = Math.max(360, Math.floor(rect.width || canvas.parentElement?.clientWidth || 720));
+  const height = Math.max(220, Math.floor(rect.height || 240));
+  if (canvas.width !== Math.floor(width * ratio) || canvas.height !== Math.floor(height * ratio)) {
+    canvas.width = Math.floor(width * ratio);
+    canvas.height = Math.floor(height * ratio);
+  }
+  const ctx = canvas.getContext('2d');
+  if (ctx) ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+}
+
+function drawCandleChart(candles = latestCandles) {
+  const canvas = document.getElementById('market-candle-canvas');
+  const empty = document.getElementById('chart-empty');
+  if (!canvas) return;
+  resizeMarketCanvas();
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.getBoundingClientRect();
+  const width = Math.max(360, rect.width || 720);
+  const height = Math.max(220, rect.height || 240);
+  ctx.clearRect(0, 0, width, height);
+
+  const rows = Array.isArray(candles)
+    ? candles.map(c => ({
+        timestamp: c.timestamp,
+        open: Number(c.open),
+        high: Number(c.high),
+        low: Number(c.low),
+        close: Number(c.close),
+        volume: Number(c.volume),
+      })).filter(c => [c.open, c.high, c.low, c.close].every(Number.isFinite))
+    : [];
+
+  if (!rows.length) {
+    if (empty) empty.classList.add('visible');
+    return;
+  }
+  if (empty) empty.classList.remove('visible');
+
+  const padL = 54, padR = 70, padT = 16, padB = 34;
+  const plotW = Math.max(80, width - padL - padR);
+  const plotH = Math.max(80, height - padT - padB);
+  const minLow = Math.min(...rows.map(c => c.low));
+  const maxHigh = Math.max(...rows.map(c => c.high));
+  const span = Math.max(1e-12, maxHigh - minLow);
+  const y = price => padT + (maxHigh - price) / span * plotH;
+  const step = plotW / Math.max(rows.length, 1);
+  const candleW = Math.max(3, Math.min(14, step * 0.58));
+
+  ctx.save();
+  ctx.font = '11px ui-monospace, SFMono-Regular, Consolas, monospace';
+  ctx.lineWidth = 1;
+
+  // Grid and right axis labels.
+  ctx.strokeStyle = 'rgba(255,255,255,.075)';
+  ctx.fillStyle = 'rgba(146,161,185,.92)';
+  for (let i = 0; i <= 4; i++) {
+    const yy = padT + (plotH / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(padL, yy);
+    ctx.lineTo(width - padR, yy);
+    ctx.stroke();
+    const price = maxHigh - (span / 4) * i;
+    ctx.fillText(formatPriceForAxis(price), width - padR + 8, yy + 4);
+  }
+
+  // Soft close line.
+  ctx.strokeStyle = 'rgba(47,124,246,.32)';
+  ctx.beginPath();
+  rows.forEach((c, i) => {
+    const x = padL + step * i + step / 2;
+    const yy = y(c.close);
+    if (i === 0) ctx.moveTo(x, yy); else ctx.lineTo(x, yy);
+  });
+  ctx.stroke();
+
+  // Candles.
+  rows.forEach((c, i) => {
+    const x = padL + step * i + step / 2;
+    const up = c.close >= c.open;
+    const color = up ? '#16c784' : '#ea3943';
+    const yHigh = y(c.high);
+    const yLow = y(c.low);
+    const yOpen = y(c.open);
+    const yClose = y(c.close);
+    const bodyTop = Math.min(yOpen, yClose);
+    const bodyH = Math.max(2, Math.abs(yClose - yOpen));
+
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x, yHigh);
+    ctx.lineTo(x, yLow);
+    ctx.stroke();
+    ctx.fillRect(x - candleW / 2, bodyTop, candleW, bodyH);
+  });
+
+  // X labels.
+  ctx.fillStyle = 'rgba(146,161,185,.9)';
+  const labelIndexes = [0, Math.floor(rows.length / 2), rows.length - 1].filter((v, i, a) => v >= 0 && a.indexOf(v) === i);
+  labelIndexes.forEach(i => {
+    const c = rows[i];
+    const x = padL + step * i + step / 2;
+    const d = new Date(c.timestamp);
+    const label = Number.isNaN(d.getTime()) ? String(c.timestamp).slice(11, 16) : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    ctx.fillText(label, Math.max(4, Math.min(width - 90, x - 24)), height - 12);
+  });
+
+  const last = rows[rows.length - 1];
+  const lastY = y(last.close);
+  ctx.strokeStyle = 'rgba(255,255,255,.35)';
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(padL, lastY);
+  ctx.lineTo(width - padR, lastY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = last.close >= last.open ? '#16c784' : '#ea3943';
+  ctx.fillRect(width - padR + 4, lastY - 10, 62, 20);
+  ctx.fillStyle = '#06101c';
+  ctx.fillText(formatPriceForAxis(last.close), width - padR + 8, lastY + 4);
+  ctx.restore();
+}
+
+async function setMarketPane(pane) {
+  currentMarketPane = pane;
+  ['chart', 'depth', 'trades', 'orders'].forEach(name => {
+    document.getElementById(`market-tab-${name}`)?.classList.toggle('active', name === pane);
+    document.getElementById(`market-view-${name}`)?.classList.toggle('active', name === pane);
+  });
+  if (pane === 'chart') drawCandleChart();
+  if (pane === 'depth') await loadDepth();
+  if (pane === 'trades') await loadRecentTrades();
+  if (pane === 'orders') await loadTrades();
+}
+
+function renderDepth(payload) {
+  latestDepth = payload || {};
+  const bids = Array.isArray(latestDepth.bids) ? latestDepth.bids : [];
+  const asks = Array.isArray(latestDepth.asks) ? latestDepth.asks : [];
+  const renderRows = (rows, cls) => rows.length
+    ? rows.map(r => `<tr><td class="mono ${cls}">${escapeHtml(r.price ?? '-')}</td><td>${escapeHtml(r.volume ?? '-')}</td><td>${escapeHtml(r.total ?? '-')}</td></tr>`).join('')
+    : `<tr><td colspan="3">No depth returned.</td></tr>`;
+  const bidBody = document.getElementById('depth-bids-body');
+  const askBody = document.getElementById('depth-asks-body');
+  if (bidBody) bidBody.innerHTML = renderRows(bids, 'depth-bid');
+  if (askBody) askBody.innerHTML = renderRows(asks, 'depth-ask');
+  setText('depth-updated', formatShortTime(latestDepth.timestamp));
+}
+
+async function loadDepth() {
+  const symbol = encodeURIComponent(currentMarketSymbol());
+  const payload = await fetchJson(`/market/depth?symbol=${symbol}&count=12`);
+  renderDepth(payload);
+}
+
+function renderRecentTrades(payload) {
+  const rows = Array.isArray(payload?.trades) ? payload.trades : (Array.isArray(payload) ? payload : []);
+  latestRecentTrades = rows;
+  const body = document.getElementById('recent-trades-body');
+  if (!body) return;
+  body.innerHTML = rows.length
+    ? rows.map(t => {
+        const side = String(t.side || '').toLowerCase();
+        const cls = side === 'buy' ? 'decision-buy' : (side === 'sell' ? 'decision-sell' : '');
+        return `<tr><td class="mono">${escapeHtml(formatShortTime(t.timestamp) || '-')}</td><td class="${cls}">${escapeHtml(side.toUpperCase() || '-')}</td><td>${escapeHtml(t.price ?? '-')}</td><td>${escapeHtml(t.volume ?? '-')}</td><td>${escapeHtml(t.order_type ?? '-')}</td></tr>`;
+      }).join('')
+    : `<tr><td colspan="5">No recent trades returned.</td></tr>`;
+  setText('recent-trades-updated', formatShortTime(payload?.timestamp));
+}
+
+async function loadRecentTrades() {
+  const symbol = encodeURIComponent(currentMarketSymbol());
+  const payload = await fetchJson(`/market/recent-trades?symbol=${symbol}&count=30`);
+  renderRecentTrades(payload);
+}
+
+function renderMarketOrders(openOrders, errorText = '') {
+  const body = document.getElementById('market-orders-body');
+  if (!body) return;
+  const rows = Array.isArray(openOrders) ? openOrders : [];
+  if (rows.length) {
+    body.innerHTML = rows.map(o => `
+      <tr>
+        <td class="mono">${escapeHtml(o.order_id ?? '-')}</td>
+        <td class="mono">${escapeHtml(o.pair ?? '-')}</td>
+        <td>${escapeHtml(o.type ?? '-')}</td>
+        <td>${escapeHtml(o.ordertype ?? '-')}</td>
+        <td>${escapeHtml(o.price ?? '-')}</td>
+        <td>${escapeHtml(o.volume ?? '-')}</td>
+        <td>${escapeHtml(o.volume_exec ?? '-')}</td>
+        <td>${escapeHtml(o.status ?? '-')}</td>
+      </tr>`).join('');
+  } else {
+    body.innerHTML = `<tr><td colspan="8">${escapeHtml(errorText || 'No live open orders loaded.')}</td></tr>`;
+  }
+  setText('market-orders-updated', new Date().toLocaleTimeString());
+}
+
+function setJson(id, obj) {
+  document.getElementById(id).textContent = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
+}
+
+function setStatus(msg, isError = false) {
+  const box = document.getElementById('bot-status-box');
+  box.textContent = `${new Date().toLocaleTimeString()} | ${msg}`;
+  if (isError) box.classList.add('error');
+  else box.classList.remove('error');
+}
+
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function formatShortTime(value) {
+  if (!value) return '-';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+let JJOZZY_LOCAL_SESSION_TOKEN = localStorage.getItem('jjozzy_local_session_token') || '';
+
+async function ensureLocalSessionToken(force = false) {
+  if (JJOZZY_LOCAL_SESSION_TOKEN && !force) return JJOZZY_LOCAL_SESSION_TOKEN;
+  const res = await fetch('/local/session-token', { credentials: 'same-origin', cache: 'no-store' });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.token) throw new Error(data.detail || data.message || 'Could not create local dashboard session.');
+  JJOZZY_LOCAL_SESSION_TOKEN = data.token;
+  localStorage.setItem('jjozzy_local_session_token', JJOZZY_LOCAL_SESSION_TOKEN);
+  return JJOZZY_LOCAL_SESSION_TOKEN;
+}
+
+async function fetchJson(url, options = {}, allowSessionRetry = true) {
+  const opts = Object.assign({ credentials: 'same-origin', cache: 'no-store' }, options || {});
+  opts.headers = Object.assign({ 'X-JJOzzy-Requested-With': 'dashboard' }, opts.headers || {});
+  if (JJOZZY_LOCAL_SESSION_TOKEN && !opts.headers['X-JJOzzy-Local-Session']) {
+    opts.headers['X-JJOzzy-Local-Session'] = JJOZZY_LOCAL_SESSION_TOKEN;
+  }
+  const res = await fetch(url, opts);
+  const txt = await res.text();
+  let data;
+  try {
+    data = txt ? JSON.parse(txt) : null;
+  } catch {
+    data = txt;
+  }
+  if (!res.ok) {
+    const detail = data && typeof data === 'object' ? (data.detail || data.message || JSON.stringify(data, null, 2)) : (txt || res.statusText);
+    if (res.status === 401 && allowSessionRetry && String(detail).toLowerCase().includes('local browser session')) {
+      await ensureLocalSessionToken(true);
+      return fetchJson(url, options, false);
+    }
+    throw new Error(detail);
+  }
+  return data;
+}
+
+function setWarningBox(id, title, messages, options = {}) {
+  const box = document.getElementById(id);
+  if (!box) return;
+  const titleEl = document.getElementById(`${id}-title`);
+  const bodyEl = document.getElementById(`${id}-body`);
+  const list = Array.isArray(messages) ? messages.filter(Boolean) : (messages ? [messages] : []);
+  box.classList.remove('bad', 'ok');
+  if (options.bad) box.classList.add('bad');
+  if (options.ok) box.classList.add('ok');
+  if (titleEl && title) titleEl.textContent = title;
+  if (bodyEl) bodyEl.innerHTML = list.length
+    ? list.map(m => `<div>${escapeHtml(m)}</div>`).join('')
+    : '';
+  box.classList.toggle('hidden', !list.length && !options.forceShow);
+}
+
+function renderConnectionWarnings(data) {
+  latestConnectionStatus = data || null;
+  const warnings = Array.isArray(data?.warnings) ? data.warnings : [];
+  const privateReady = Boolean(data?.private_account_data?.enabled);
+  const apiConfigured = Boolean(data?.private_account_data?.api_configured);
+  const publicOk = data?.public_market_data?.ok;
+  const isBad = publicOk === false;
+  const title = isBad ? 'No live Kraken market data' : privateReady ? 'Kraken API connected' : 'Kraken API not entered / private live data unavailable';
+  setWarningBox('connection-warning', title, warnings, { bad: isBad, ok: privateReady && !warnings.length, forceShow: warnings.length > 0 || isBad });
+
+  const apiEl = document.getElementById('runtime-api');
+  if (apiEl) {
+    apiEl.classList.remove('ok', 'warn', 'bad');
+    if (privateReady) {
+      apiEl.textContent = 'Live Ready';
+      apiEl.classList.add('ok');
+    } else if (!apiConfigured) {
+      apiEl.textContent = 'Missing';
+      apiEl.classList.add('bad');
+    } else {
+      apiEl.textContent = 'Dry Run';
+      apiEl.classList.add('warn');
+    }
+  }
+}
+
+async function loadConnectionStatus() {
+  const data = await fetchJson('/connection/status');
+  renderConnectionWarnings(data);
+  return data;
+}
+
+function renderAccountWarnings(data) {
+  const warnings = Array.isArray(data?.api_warnings) ? [...data.api_warnings] : [];
+  if (data?.mode && String(data.mode).toLowerCase() === 'live') {
+    ['live_balance_error', 'live_open_orders_error', 'live_trade_balance_error'].forEach(key => {
+      if (data?.[key]) warnings.push(data[key]);
+    });
+  }
+  const privateReady = Boolean(data?.kraken_private_live_data_enabled);
+  const apiConfigured = Boolean(data?.kraken_api_configured);
+  const title = privateReady ? 'Kraken live account data connected' : apiConfigured ? 'Kraken API saved but private live data disabled' : 'Kraken API missing';
+  setWarningBox('account-data-warning', title, [...new Set(warnings)], { bad: !apiConfigured, ok: privateReady && !warnings.length, forceShow: warnings.length > 0 });
+}
+
+function setMarketDataWarning(message, bad = false) {
+  setWarningBox('market-data-warning', bad ? 'No live Kraken market data' : 'Live market data connected', message ? [message] : [], { bad, ok: !bad && Boolean(message), forceShow: Boolean(message) });
+}
+
+
+function setServerLight(isUp) {
+  ['server-light', 'server-light-card'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('up', 'down');
+    el.classList.add(isUp ? 'up' : 'down');
+  });
+}
+
+function liveAssetLabel(asset) {
+  const raw = String(asset || '').toUpperCase();
+  if (raw === 'ZUSD') return 'USD';
+  if (raw === 'ZAUD') return 'AUD';
+  if (raw === 'ZEUR') return 'EUR';
+  if (raw.startsWith('Z') && raw.length === 4) return raw.slice(1);
+  if (raw.startsWith('X') && raw.length > 3) return raw.slice(1);
+  return raw;
+}
+
+function firstPositiveNumberText(...values) {
+  for (const value of values) {
+    const num = Number(value ?? 0);
+    if (Number.isFinite(num) && num > 0) return String(value);
+  }
+  return '';
+}
+
+function liveBalanceDisplayFromOverview(data) {
+  if (!data || typeof data !== 'object') return '';
+
+  const tradeBalance = data.live_trade_balance || {};
+  const quote = String(tradeBalance.working_quote || '').toUpperCase();
+  const tradeBalanceText = firstPositiveNumberText(tradeBalance.mf, tradeBalance.eb, tradeBalance.e, tradeBalance.tb);
+  if (tradeBalanceText) return `${formatNumber(tradeBalanceText, 4)} ${quote || 'AUD'}`;
+
+  const balances = Array.isArray(data.live_balances) ? data.live_balances : [];
+  const quotePriority = ['ZAUD', 'AUD', 'ZUSD', 'USD', 'ZEUR', 'EUR'];
+  for (const wanted of quotePriority) {
+    const row = balances.find(b => String(b.asset || '').toUpperCase() === wanted);
+    if (!row) continue;
+    const value = firstPositiveNumberText(row.available, row.balance, row.hold_trade);
+    if (value) return `${formatNumber(value, 8)} ${liveAssetLabel(row.asset)}`;
+  }
+
+  const firstPositive = balances.find(b =>
+    Number(b.available ?? 0) > 0 ||
+    Number(b.balance ?? 0) > 0 ||
+    Number(b.hold_trade ?? 0) > 0 ||
+    Number(b.credit ?? 0) > 0
+  );
+  if (firstPositive) {
+    const value = firstPositiveNumberText(firstPositive.available, firstPositive.balance, firstPositive.hold_trade, firstPositive.credit);
+    if (value) return `${formatNumber(value, 8)} ${liveAssetLabel(firstPositive.asset)}`;
+  }
+
+  return '';
+}
+
+function localAccountDisplay(data) {
+  if (!data || typeof data !== 'object') return '-';
+
+  const liveDisplay = liveBalanceDisplayFromOverview(data);
+  if (liveDisplay) return liveDisplay;
+
+  for (const key of ['total_equity', 'equity', 'total_balance', 'balance', 'cash', 'available_cash']) {
+    if (data[key] !== undefined && data[key] !== null && data[key] !== '') return String(data[key]);
+  }
+  const balances = data.balances || data.paper_balance || {};
+  for (const key of ['total_equity', 'cash', 'balance', 'primary_balance', 'primary_available']) {
+    if (balances[key] !== undefined && balances[key] !== null && balances[key] !== '') return String(balances[key]);
+  }
+  return '-';
+}
+
+function customerInstallId() {
+  let id = localStorage.getItem('jjozzy_customer_install_id') || localStorage.getItem('jjozzy_install_id') || '';
+  if (!id || String(id).startsWith('jjozzy-') || String(id).startsWith('jjozzy-web-')) {
+    const raw = (window.crypto && crypto.randomUUID) ? crypto.randomUUID().replaceAll('-', '') : (Date.now().toString(16) + Math.random().toString(16).slice(2));
+    id = 'cust-' + raw.slice(0, 32);
+  }
+  localStorage.setItem('jjozzy_customer_install_id', id);
+  localStorage.setItem('jjozzy_install_id', id);
+  return id;
+}
+
+function saveCustomerApprovalFields() {
+  const email = document.getElementById('customer-approval-email')?.value?.trim() || '';
+  const name = document.getElementById('customer-approval-name')?.value?.trim() || '';
+  if (email) localStorage.setItem('jjozzy_customer_email', email);
+  if (name) localStorage.setItem('jjozzy_customer_name', name);
+  setText('customer-install-id', customerInstallId());
+  setStatus('Customer approval details saved.');
+}
+
+function loadCustomerApprovalFields() {
+  const email = localStorage.getItem('jjozzy_customer_email') || '';
+  const name = localStorage.getItem('jjozzy_customer_name') || '';
+  const emailInput = document.getElementById('customer-approval-email');
+  const nameInput = document.getElementById('customer-approval-name');
+  if (emailInput && !emailInput.value) emailInput.value = email;
+  if (nameInput && !nameInput.value) nameInput.value = name;
+  setText('customer-install-id', customerInstallId());
+}
+
+function setCustomerApproval(allowed, payload = null) {
+  const label = allowed ? 'Approved' : 'Paper Only';
+  const cls = allowed ? 'runtime-value ok' : 'runtime-value warn';
+  for (const id of ['customer-approval-state', 'runtime-approval']) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.textContent = label;
+      el.className = cls;
+    }
+  }
+  if (payload) setJson('customer-approval-box', payload);
+}
+
+async function customerRuntimePayload() {
+  loadCustomerApprovalFields();
+  const email = document.getElementById('customer-approval-email')?.value?.trim() || localStorage.getItem('jjozzy_customer_email') || '';
+  const name = document.getElementById('customer-approval-name')?.value?.trim() || localStorage.getItem('jjozzy_customer_name') || '';
+  const payload = {
+    email,
+    customer_email: email,
+    name,
+    customer_name: name,
+    install_id: customerInstallId(),
+    machine_id: customerInstallId(),
+    client_kind: 'customer',
+    loaded: true,
+    page: 'dashboard',
+    checked_at: new Date().toISOString()
+  };
+
+  try {
+    payload.bot_status = latestBotStatus || await fetchJson('/bot/status');
+    payload.running = Boolean(payload.bot_status?.running);
+    payload.mode = payload.bot_status?.mode || 'paper';
+  } catch (err) {
+    payload.bot_status_error = err.message || String(err);
+    payload.running = false;
+    payload.mode = 'paper';
+  }
+
+  try {
+    payload.account = await fetchJson('/account/overview');
+    payload.balance = localAccountDisplay(payload.account);
+  } catch (err) {
+    payload.account_error = err.message || String(err);
+    payload.balance = '-';
+  }
+
+
+  try {
+    const telemetry = await fetchJson('/customer/telemetry');
+    payload.telemetry = telemetry.telemetry || telemetry;
+    payload.pnl = telemetry.pnl || payload.telemetry?.pnl || {};
+    payload.performance = telemetry.performance || payload.telemetry?.performance || {};
+    payload.positions = telemetry.positions || payload.telemetry?.positions || [];
+    payload.safety = telemetry.safety || payload.telemetry?.safety || {};
+    payload.scanner = telemetry.scanner || payload.telemetry?.scanner || {};
+    payload.update = telemetry.update || payload.telemetry?.update || {};
+    payload.api_status = telemetry.api_status || payload.telemetry?.api_status || {};
+    payload.errors = telemetry.errors || payload.telemetry?.errors || {};
+  } catch (err) {
+    payload.telemetry_error = err.message || String(err);
+  }
+
+  return payload;
+}
+
+
+function adminUpdateRequired(data) {
+  if (!data || typeof data !== 'object') return false;
+  const candidates = [data, data.update, data.license, data.customer, data.approval].filter(x => x && typeof x === 'object');
+  return candidates.some(x => Boolean(x.force_update || x.update_required || x.mandatory_update || ['mandatory','force','forced','required'].includes(String(x.update_policy || '').toLowerCase())));
+}
+
+let adminForcedUpdateStarted = false;
+async function startCustomerUpdateNow() {
+  setStatus('Starting customer update. The app may close and restart after the package is verified...', true);
+  try {
+    const result = await fetchJson('/customer/update-download-apply', { method: 'POST', credentials: 'same-origin' });
+    setJson('customer-approval-box', result);
+    setStatus(result?.message || 'Updater started. Customer app will restart.', !result?.ok);
+  } catch (err) {
+    setJson('customer-approval-box', { update_required: true, error: err.message || String(err) });
+    setStatus('Update could not start. Check update signature/SHA/package.', true);
+  }
+}
+
+async function handleAdminForcedUpdate(data) {
+  if (!adminUpdateRequired(data) || adminForcedUpdateStarted) return;
+  adminForcedUpdateStarted = true;
+  // Do not auto-run /customer/update-download-apply from the approval/apply button.
+  // That route intentionally closes/restarts the local server after staging an update,
+  // which made the customer app look like it crashed as soon as Send Approval Request was pressed.
+  const updatePayload = {
+    update_required: true,
+    message: 'Mandatory update required by admin. Click Update Now to download, verify, and restart the customer app.',
+    admin: data
+  };
+  setJson('customer-approval-box', updatePayload);
+  setStatus('Mandatory update required by admin. Click Update Now when ready; the app will restart after verification.', true);
+  const box = document.getElementById('customer-approval-box');
+  if (box && !document.getElementById('customer-update-now-button')) {
+    const btn = document.createElement('button');
+    btn.id = 'customer-update-now-button';
+    btn.className = 'primary';
+    btn.type = 'button';
+    btn.style.marginTop = '10px';
+    btn.textContent = 'Update Now';
+    btn.onclick = () => safeAction(startCustomerUpdateNow);
+    box.insertAdjacentElement('afterend', btn);
+  }
+}
+
+async function requestCustomerApproval() {
+  saveCustomerApprovalFields();
+  try {
+    const payload = await customerRuntimePayload();
+    const data = await fetchJson('/customer/request-approval', {
+      method: 'POST',
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const allowed = Boolean(data?.allowed || data?.approved || data?.admin_allowed || data?.approval_allowed || data?.license?.allowed);
+    setCustomerApproval(allowed, data);
+    await handleAdminForcedUpdate(data);
+    setStatus(allowed ? 'Customer approved.' : (data?.forwarded === false ? 'Approval saved locally / admin unreachable.' : 'Customer approval request sent.'));
+  } catch (err) {
+    const msg = err?.message || String(err);
+    const payload = { ok:false, status:'local_fetch_failed', message:'The local customer app did not answer the approval request. Restart the customer app and check the console log.', error: msg };
+    setCustomerApproval(false, payload);
+    setStatus('Approval request failed locally: ' + msg, true);
+  }
+}
+
+async function checkCustomerApproval() {
+  loadCustomerApprovalFields();
+  try {
+    const email = document.getElementById('customer-approval-email')?.value?.trim() || localStorage.getItem('jjozzy_customer_email') || '';
+    const query = new URLSearchParams({ email, customer_email: email, install_id: customerInstallId(), machine_id: customerInstallId() });
+    const data = await fetchJson(`/customer/approval-status?${query.toString()}`, { credentials:'same-origin', cache:'no-store' });
+    const allowed = Boolean(data?.allowed || data?.approved || data?.admin_allowed || data?.approval_allowed || data?.license?.allowed);
+    setCustomerApproval(allowed, data);
+    await handleAdminForcedUpdate(data);
+    setStatus(allowed ? 'Customer approved.' : 'Customer waiting for approval.');
+  } catch (err) {
+    const msg = err?.message || String(err);
+    setCustomerApproval(false, { ok:false, status:'local_fetch_failed', error: msg });
+    setStatus('Approval check failed locally: ' + msg, true);
+  }
+}
+
+async function sendCustomerCheckIn(writeToBox = false) {
+  try {
+    const payload = await customerRuntimePayload();
+    const data = await fetchJson(('/customer/' + 'heart' + 'beat'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (writeToBox) setJson('customer-approval-box', data);
+    await handleAdminForcedUpdate(data);
+    return data;
+  } catch (err) {
+    if (writeToBox) setJson('customer-approval-box', { error: err.message || String(err) });
+    return null;
+  }
+}
+
+async function loadCustomerRuntimeOverview() {
+  try {
+    const health = await fetchJson('/health');
+    const up = health?.ok !== false;
+    setServerLight(up);
+    setText('server-state', up ? 'SERVER UP' : 'SERVER DOWN');
+    setText('server-state-card', up ? 'SERVER UP' : 'SERVER DOWN');
+  } catch (err) {
+    setServerLight(false);
+    setText('server-state', 'SERVER DOWN');
+    setText('server-state-card', 'SERVER DOWN');
+  }
+
+  try {
+    const account = await fetchJson('/account/overview');
+    const balance = localAccountDisplay(account);
+    setText('balance-strip', balance);
+    setText('runtime-balance', balance);
+  } catch {
+    setText('balance-strip', 'Unavailable');
+    setText('runtime-balance', 'Unavailable');
+  }
+
+  await sendCustomerCheckIn(false);
+}
+
+
+async function safeAction(fn) {
+  try {
+    await fn();
+  } catch (err) {
+    console.error(err);
+    setStatus(String(err), true);
+  }
+}
+
+function toggleLimitPrice() {
+  document.getElementById('limit-price-wrap').style.display =
+    document.getElementById('order-type').value === 'limit' ? 'block' : 'none';
+}
+
+function formatDecisionAction(action) {
+  const clean = String(action || '-').toLowerCase();
+  if (clean === 'buy') return `<span class="decision-buy">BUY</span>`;
+  if (clean === 'sell') return `<span class="decision-sell">SELL</span>`;
+  if (clean === 'hold') return `<span class="decision-hold">HOLD</span>`;
+  return clean.toUpperCase();
+}
+
+function formatNumber(value, maxDecimals = 8) {
+  const num = Number(value ?? 0);
+  if (!Number.isFinite(num)) return '-';
+  return num.toLocaleString(undefined, { maximumFractionDigits: maxDecimals });
+}
+
+function toNumber(value) {
+  const num = Number(value ?? 0);
+  return Number.isFinite(num) ? num : 0;
+}
+
+function meaningfulLiveBalance(b) {
+  return toNumber(b.available) > 0 || toNumber(b.balance) > 0 || toNumber(b.hold_trade) > 0 || toNumber(b.credit) > 0 || toNumber(b.credit_used) > 0;
+}
+
+function sortLiveBalances(items) {
+  return [...items].sort((a, b) => {
+    const aScore = Math.max(toNumber(a.balance), toNumber(a.available), toNumber(a.hold_trade));
+    const bScore = Math.max(toNumber(b.balance), toNumber(b.available), toNumber(b.hold_trade));
+    return bScore - aScore || String(a.asset || '').localeCompare(String(b.asset || ''));
+  });
+}
+
+function getLiveCashDisplay(data, balances) {
+  const liveDisplay = liveBalanceDisplayFromOverview(data);
+  if (liveDisplay) return liveDisplay;
+  const firstBalance = Array.isArray(balances) ? balances.find(meaningfulLiveBalance) : null;
+  if (firstBalance) {
+    const value = firstPositiveNumberText(firstBalance.available, firstBalance.balance, firstBalance.hold_trade, firstBalance.credit);
+    if (value) return `${formatNumber(value, 8)} ${liveAssetLabel(firstBalance.asset)}`;
+  }
+  return 'LIVE';
+}
+
+function getLiveEquityDisplay(data) {
+  const tradeBalance = data.live_trade_balance || {};
+  const quote = String(tradeBalance.working_quote || '').toUpperCase() || 'AUD';
+  const value = firstPositiveNumberText(tradeBalance.eb, tradeBalance.e, tradeBalance.tb);
+  if (value) return `${formatNumber(value, 4)} ${quote}`;
+  return liveBalanceDisplayFromOverview(data) || 'LIVE';
+}
+
+function getLiveAssetsTotal(data) {
+  const tradeBalance = data.live_trade_balance || {};
+  const quote = String(tradeBalance.working_quote || '').toUpperCase() || 'AUD';
+  const value = firstPositiveNumberText(tradeBalance.eb, tradeBalance.e, tradeBalance.tb);
+  if (value) return `${formatNumber(value, 4)} ${quote}`;
+  return liveBalanceDisplayFromOverview(data) || 'LIVE';
+}
+
+function renderFocusDecision(decision) {
+  if (!decision) {
+    document.getElementById('focus-symbol').textContent = '-';
+    document.getElementById('focus-action').textContent = '-';
+    document.getElementById('focus-confidence').textContent = '-';
+    document.getElementById('focus-last-price').textContent = '-';
+    document.getElementById('focus-risk').textContent = '-';
+    document.getElementById('focus-order-status').textContent = '-';
+    document.getElementById('focus-reason').textContent = 'No decision selected.';
+    document.getElementById('focus-payload').textContent = 'No pair data loaded.';
+    return;
+  }
+
+  document.getElementById('focus-symbol').textContent = decision.symbol ?? '-';
+  document.getElementById('focus-action').innerHTML = formatDecisionAction(decision.action);
+  document.getElementById('focus-confidence').textContent = decision.confidence ?? '-';
+  document.getElementById('focus-last-price').textContent = decision.last_price ?? '-';
+  document.getElementById('focus-risk').textContent = decision.risk_fraction ?? '-';
+
+  if (decision.executed_order) {
+    document.getElementById('focus-order-status').textContent =
+      decision.executed_order.status || decision.executed_order.order_id || 'executed';
+  } else {
+    document.getElementById('focus-order-status').textContent = 'none';
+  }
+
+  document.getElementById('focus-reason').textContent = decision.reason ?? 'No reason provided.';
+
+  const payload = {
+    symbol: decision.symbol ?? null,
+    action: decision.action ?? null,
+    confidence: decision.confidence ?? null,
+    last_price: decision.last_price ?? null,
+    stop_loss: decision.stop_loss ?? null,
+    take_profit: decision.take_profit ?? null,
+    risk_fraction: decision.risk_fraction ?? null,
+    reason: decision.reason ?? null,
+    executed_order: decision.executed_order ?? null
+  };
+
+  document.getElementById('focus-payload').textContent = JSON.stringify(payload, null, 2);
+}
+
+
+
+function buildSyntheticDecisionFromCandidate(row, scan, idx) {
+  const actionable = Array.isArray(scan?.enterable_now) && scan.enterable_now.length > 0;
+  return {
+    symbol: row.symbol ?? '-',
+    action: actionable ? 'buy_candidate' : 'watchlist',
+    confidence: row.ai_confidence ?? row.total_score ?? '-',
+    last_price: row.last ?? '-',
+    reason: row.rationale ?? `${actionable ? 'Enterable' : 'Watchlist'} | spread ${row.spread_pct ?? '-'} | 6h ${row.change_6h_pct ?? '-'} | 24h ${row.change_24h_pct ?? '-'}`,
+    risk_fraction: row.invalidation_below ?? '-',
+    executed_order: {
+      source: 'ai_market_scan',
+      rank: idx + 1,
+      quote: scan?.quote ?? '-',
+      regime: scan?.market_regime ?? '-',
+      enterable_now: actionable,
+      invalidation_below: row.invalidation_below ?? '-',
+      spread_pct: row.spread_pct ?? '-',
+      total_score: row.total_score ?? '-',
+    }
+  };
+}
+
+
+function renderSellSafetyPanel(payload) {
+  latestSellSafety = payload || {};
+  const rows = Array.isArray(latestSellSafety.positions) ? latestSellSafety.positions : [];
+  setText('sell-safe-positions', String(rows.length));
+  setText('sell-safe-allowed', String(latestSellSafety.allowed_count ?? rows.filter(r => r.allowed).length));
+  setText('sell-safe-blocked', String(latestSellSafety.blocked_count ?? rows.filter(r => r.status === 'evaluated' && !r.allowed).length));
+  setText('sell-safe-min-profit', `${latestSellSafety.minimum_profit_pct ?? '-'}%`);
+  setText('sell-safe-updated', formatShortTime(latestSellSafety.observed_at));
+  const body = document.getElementById('sell-safety-body');
+  if (!body) return;
+  body.innerHTML = rows.length
+    ? rows.map((row, index) => {
+        const gate = row.allowed ? 'allowed' : 'blocked';
+        const fees = `Buy: ${row.buy_fee_quote ?? '-'} ${row.quote_asset ?? ''}<br>Sell est: ${row.estimated_sell_fee_quote ?? '-'} ${row.quote_asset ?? ''}<br>Slip est: ${row.estimated_slippage_quote ?? '-'} ${row.quote_asset ?? ''}`;
+        const pnlClass = Number(row.estimated_net_profit_quote || 0) >= 0 ? 'asset-positive' : 'asset-negative';
+        return `
+          <tr onclick="renderFocusDecision({symbol: latestSellSafety.positions[${index}]?.symbol, action: 'sell_guard', confidence: '-', last_price: latestSellSafety.positions[${index}]?.current_exit_price, risk_fraction: '-', reason: latestSellSafety.positions[${index}]?.gate_reason, executed_order: {status: '${gate}', sell_safety: latestSellSafety.positions[${index}]}})" style="cursor:pointer;">
+            <td class="mono">${escapeHtml(row.symbol ?? '-')}<br><span class="small-note">Qty ${escapeHtml(row.quantity ?? '-')}</span></td>
+            <td>${escapeHtml(row.buy_cost_quote ?? '-')} ${escapeHtml(row.quote_asset ?? '')}<br><span class="small-note">basis ${escapeHtml(row.cost_basis_quote ?? '-')}</span></td>
+            <td class="small-note">${fees}</td>
+            <td>${escapeHtml(row.break_even_sell_price ?? '-')}</td>
+            <td>${escapeHtml(row.current_sell_net_quote ?? '-')} ${escapeHtml(row.quote_asset ?? '')}<br><span class="small-note">gross ${escapeHtml(row.current_sell_gross_quote ?? '-')}</span></td>
+            <td class="${pnlClass}">${escapeHtml(row.estimated_net_profit_quote ?? '-')} ${escapeHtml(row.quote_asset ?? '')}<br><span class="small-note">${escapeHtml(row.estimated_net_profit_pct ?? '-')}%</span></td>
+            <td><span class="gate-badge ${gate}">${gate.toUpperCase()}</span><br><span class="small-note">${escapeHtml(row.gate_reason ?? '-')}</span></td>
+          </tr>`;
+      }).join('')
+    : `<tr><td colspan="7">No sellable live positions found for the current working quote.</td></tr>`;
+}
+
+async function loadSellSafety() {
+  const payload = await fetchJson('/bot/sell-safety');
+  renderSellSafetyPanel(payload);
+}
+
+function renderNoTradePanel(payload) {
+  const items = Array.isArray(payload?.items) ? payload.items : [];
+  latestNoTradeReasons = items;
+  const counts = payload?.category_counts || {};
+  const topCategory = Object.entries(counts).sort((a, b) => Number(b[1]) - Number(a[1]))[0];
+
+  setText('no-trade-cycle', payload?.cycles_completed ?? '-');
+  setText('no-trade-count', payload?.count ?? items.length);
+  setText('no-trade-top', topCategory ? `${topCategory[0]} (${topCategory[1]})` : '-');
+  setText('no-trade-updated', new Date().toLocaleTimeString());
+
+  const body = document.getElementById('no-trade-body');
+  if (!body) return;
+  body.innerHTML = items.length
+    ? items.map((d, index) => `
+      <tr onclick="renderFocusDecision(latestNoTradeReasons[${index}])" style="cursor:pointer;">
+        <td class="mono">${escapeHtml(formatShortTime(d.observed_at))}</td>
+        <td class="mono">${escapeHtml(d.symbol ?? '-')}</td>
+        <td><span class="reason-badge">${escapeHtml(d.reason_category ?? 'Other')}</span></td>
+        <td>${formatDecisionAction(d.action)}</td>
+        <td class="reason-text">${escapeHtml(d.reason ?? '-')}</td>
+      </tr>
+    `).join('')
+    : `<tr><td colspan="5">No no-trade reasons yet. Start or run the bot once.</td></tr>`;
+}
+
+async function loadNoTradeReasons() {
+  const payload = await fetchJson('/bot/no-trade-reasons?limit=20');
+  renderNoTradePanel(payload);
+}
+
+function renderDecisionRows(decisions) {
+  const body = document.getElementById('decisions-body');
+  const items = Array.isArray(decisions) ? decisions : [];
+  body.innerHTML = items.length
+    ? items.map((d, index) => `
+      <tr onclick="renderFocusDecision(latestUnifiedDecisions[${index}])" style="cursor:pointer;">
+        <td class="mono">${escapeHtml(d.symbol ?? '-')}</td>
+        <td>${formatDecisionAction(d.action)}</td>
+        <td>${escapeHtml(d.confidence ?? '-')}</td>
+        <td>${escapeHtml(d.last_price ?? '-')}</td>
+        <td>${escapeHtml(d.reason ?? '-')}</td>
+        <td><pre style="margin:0;color:inherit;white-space:pre-wrap;">${d.executed_order ? escapeHtml(JSON.stringify(d.executed_order, null, 2)) : '-'}</pre></td>
+      </tr>
+    `).join('')
+    : `<tr><td colspan="6">No decisions yet.</td></tr>`;
+}
+
+function renderReviewedOpenOrders(rows) {
+  const body = document.getElementById('live-open-orders-body');
+  const items = Array.isArray(rows) ? rows : [];
+  body.innerHTML = items.length
+    ? items.map(o => `
+      <tr>
+        <td class="mono">${o.order_id ?? '-'}</td>
+        <td class="mono">${o.pair ?? '-'}</td>
+        <td>${o.type ?? '-'}</td>
+        <td>${o.action ?? '-'}</td>
+        <td>${o.price ?? '-'}</td>
+        <td>${o.market_ask ?? o.market_bid ?? '-'}</td>
+        <td>-</td>
+        <td>${o.reason ?? '-'}</td>
+      </tr>
+    `).join('')
+    : `<tr><td colspan="8">No live open orders loaded.</td></tr>`;
+}
+
+async function loadDecisionFeedIntel() {
+  let snapshot = null;
+  try { snapshot = await fetchJson('/ai/account-snapshot'); } catch (e) {}
+  let quote = (snapshot && snapshot.preferred_quote) ? String(snapshot.preferred_quote).toUpperCase() : 'AUD';
+  let scan = null;
+  try { scan = await fetchJson(`/ai/market-scan?quote=${encodeURIComponent(quote)}&top_n=5`); } catch (e) {}
+  if (scan && (!Array.isArray(scan.enterable_now) || !scan.enterable_now.length) && quote !== 'USD') {
+    try { scan = await fetchJson('/ai/market-scan?quote=USD&top_n=5'); quote = 'USD'; } catch (e) {}
+  }
+  let openReview = null;
+  try { openReview = await fetchJson('/ai/review-open-orders'); } catch (e) {}
+
+  const botDecisions = Array.isArray(latestBotStatus?.decisions) ? latestBotStatus.decisions : [];
+  const scanRows = scan ? ((Array.isArray(scan.enterable_now) && scan.enterable_now.length) ? scan.enterable_now : (Array.isArray(scan.top_candidates) ? scan.top_candidates : [])) : [];
+  const synthetic = scanRows.map((row, idx) => buildSyntheticDecisionFromCandidate(row, scan, idx));
+  latestOpenOrderActions = Array.isArray(openReview?.open_order_actions) ? openReview.open_order_actions : [];
+  latestUnifiedDecisions = [...botDecisions, ...synthetic].slice(-10).reverse();
+  latestDecisionMap = {};
+  latestUnifiedDecisions.forEach(d => { if (d && d.symbol) latestDecisionMap[String(d.symbol).toUpperCase()] = d; });
+  renderDecisionRows(latestUnifiedDecisions);
+  renderReviewedOpenOrders(latestOpenOrderActions);
+  try { await loadNoTradeReasons(); } catch (e) { console.warn('No-trade reason feed unavailable', e); }
+  try { await loadProductionReadiness(); } catch (e) { console.warn('Production readiness unavailable', e); }
+  try { await loadLicenseStatus(); } catch (e) { console.warn('License status unavailable', e); }
+  try { await loadSellSafety(); } catch (e) { console.warn('Sell safety feed unavailable', e); }
+  focusLatestDecision();
+}
+
+function renderMarketRail(cards, note) {
+  const rail = document.getElementById('market-rail-list');
+  if (!rail) return;
+  rail.innerHTML = cards.length ? cards.map(card => `
+    <div class="market-chip" onclick="useRailSymbol('${card.symbol.replace("'", "\'")}')" style="cursor:pointer;">
+      <div><strong class="mono">${card.symbol}</strong><br><span>${card.label}</span></div>
+      <span>${card.value ?? '-'}</span>
+    </div>
+  `).join('') : `<div class="market-chip"><div><strong class="mono">-</strong><br><span>No ranked markets yet</span></div><span>-</span></div>`;
+  const noteBox = document.getElementById('market-rail-note');
+  if (noteBox && note) noteBox.textContent = note;
+}
+
+function useRailSymbol(symbol) {
+  document.getElementById('market-symbol').value = symbol;
+  safeAction(loadMarket);
+}
+
+async function loadWorkspaceIntel() {
+  const cards = [];
+  const selected = document.getElementById('market-symbol').value.trim().toUpperCase() || '{{ default_pair }}';
+  cards.push({ symbol: selected, label: 'Focused market', value: document.getElementById('ticker-last-chip').textContent || '-' });
+
+  let snapshot = null;
+  try { snapshot = await fetchJson('/ai/account-snapshot'); } catch (e) {}
+
+  let quote = (snapshot && snapshot.preferred_quote) ? String(snapshot.preferred_quote).toUpperCase() : 'AUD';
+  let scan = null;
+  try { scan = await fetchJson(`/ai/market-scan?quote=${encodeURIComponent(quote)}&top_n=5`); } catch (e) {}
+  if (scan && (!Array.isArray(scan.enterable_now) || !scan.enterable_now.length) && quote !== 'USD') {
+    try { scan = await fetchJson('/ai/market-scan?quote=USD&top_n=5'); quote = 'USD'; } catch (e) {}
+  }
+
+  const primary = scan ? ((Array.isArray(scan.enterable_now) && scan.enterable_now.length) ? scan.enterable_now : (Array.isArray(scan.top_candidates) ? scan.top_candidates : [])) : [];
+  primary.slice(0, 3).forEach((row, idx) => {
+    cards.push({
+      symbol: row.symbol,
+      label: (scan.enterable_now && scan.enterable_now.length) ? `AI entry ${idx + 1}` : `AI watchlist ${idx + 1}`,
+      value: row.last ?? '-'
+    });
+  });
+
+  let listings = null;
+  try { listings = await fetchJson('/universe/new-listings'); } catch (e) {}
+  const newPairs = Array.isArray(listings?.new_pairs) ? listings.new_pairs.slice(0, 2) : [];
+  newPairs.forEach(symbol => cards.push({ symbol, label: 'New listing watch', value: 'new' }));
+
+  let openReview = null;
+  try { openReview = await fetchJson('/ai/review-open-orders'); } catch (e) {}
+  const actionCount = Array.isArray(openReview?.open_order_actions) ? openReview.open_order_actions.length : 0;
+  const note = scan?.note || `Preferred quote ${quote}. Open-order actions: ${actionCount}. New listings watched: ${newPairs.length}.`;
+  renderMarketRail(cards.slice(0, 6), note);
+}
+
+function focusLatestDecision() {
+  if (!latestBotStatus || !Array.isArray(latestBotStatus.decisions) || !latestBotStatus.decisions.length) {
+    renderFocusDecision(null);
+    return;
+  }
+  renderFocusDecision(latestBotStatus.decisions[latestBotStatus.decisions.length - 1]);
+}
+
+function focusSelectedDecision() {
+  const symbol = document.getElementById('market-symbol').value.trim().toUpperCase();
+  if (!symbol || !latestDecisionMap[symbol]) {
+    setStatus(`No cached decision found for ${symbol || 'selected symbol'}.`, true);
+    return;
+  }
+  renderFocusDecision(latestDecisionMap[symbol]);
+}
+
+async function loadConfig() {
+  setJson('config-box', await fetchJson('/config/summary'));
+}
+
+let settingsEditorLoaded = false;
+let editableSettingsSchema = [];
+const DEFAULT_EDITABLE_SETTINGS = [
+  {
+    "key": "KRAKEN_API_KEY",
+    "label": "Kraken API key",
+    "group": "Kraken API",
+    "input_type": "secret",
+    "help": "Stored in .env and applied to the current Kraken client. Use a trading-only key with no withdrawal permission.",
+    "placeholder": "paste Kraken API key",
+    "sensitive": true,
+    "restart_required": false
+  },
+  {
+    "key": "KRAKEN_API_SECRET",
+    "label": "Kraken private key / secret",
+    "group": "Kraken API",
+    "input_type": "secret",
+    "help": "Stored in .env and applied to the current Kraken client. Blank means keep the existing secret.",
+    "placeholder": "paste Kraken private key",
+    "sensitive": true,
+    "restart_required": false
+  },
+  {
+    "key": "KRAKEN_API_WITHDRAWALS_DISABLED_ACK",
+    "label": "Withdrawal permission disabled",
+    "group": "Kraken API",
+    "input_type": "boolean",
+    "help": "Set true only after checking the Kraken API key has no withdrawal permission.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "KRAKEN_TIMEOUT_SECONDS",
+    "label": "Kraken timeout seconds",
+    "group": "Kraken API",
+    "input_type": "integer",
+    "help": "HTTP timeout for Kraken requests.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "DRY_RUN",
+    "label": "Dry run",
+    "group": "Live / safety",
+    "input_type": "boolean",
+    "help": "ON means no real Kraken orders should be sent.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "LIVE_TRADING_ENABLED",
+    "label": "Live trading enabled",
+    "group": "Live / safety",
+    "input_type": "boolean",
+    "help": "Allows live mode when readiness checks pass.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "MANUAL_LIVE_ORDERS_ENABLED",
+    "label": "Manual live orders",
+    "group": "Live / safety",
+    "input_type": "boolean",
+    "help": "Keep OFF unless you intentionally want the Trade Desk live button enabled.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "MAX_LIVE_POSITIONS",
+    "label": "Max live positions",
+    "group": "Live / safety",
+    "input_type": "integer",
+    "help": "Hard cap on simultaneous live positions.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "MAX_LIVE_TRADE_VALUE_QUOTE",
+    "label": "Max live trade value",
+    "group": "Live / safety",
+    "input_type": "number",
+    "help": "Max quote-currency value for a single live buy.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "MAX_DAILY_LIVE_BUYS",
+    "label": "Max daily live buys",
+    "group": "Live / safety",
+    "input_type": "integer",
+    "help": "Daily cap for live buys.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "MIN_NET_PROFIT_AFTER_FEES_PCT",
+    "label": "Minimum net profit after fees %",
+    "group": "Live / safety",
+    "input_type": "number",
+    "help": "Sell gate target. Example: 1.5 means 1.5%, not 0.015.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "ENTRY_NO_CHASE_GUARD_ENABLED",
+    "label": "No-chase guard",
+    "group": "Entry firewall",
+    "input_type": "boolean",
+    "help": "Blocks local-high and spike chasing buys.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "ENTRY_REQUIRE_PULLBACK_CONFIRMATION",
+    "label": "Require pullback confirmation",
+    "group": "Entry firewall",
+    "input_type": "boolean",
+    "help": "Buy only after a real pullback/rebound confirmation.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "ENTRY_BLOCK_RED_CANDLE_BUY",
+    "label": "Block red-candle buys",
+    "group": "Entry firewall",
+    "input_type": "boolean",
+    "help": "Blocks buying while the active candle is red.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "ENTRY_MAX_24H_MOVE_PCT",
+    "label": "Max 24h move %",
+    "group": "Entry firewall",
+    "input_type": "number",
+    "help": "Reject entries after too much 24h extension.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "ENTRY_LOCAL_HIGH_BLOCK_PCT",
+    "label": "Local high block %",
+    "group": "Entry firewall",
+    "input_type": "number",
+    "help": "Blocks entries too close to the recent local high.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "ENTRY_MIN_PULLBACK_FROM_24H_HIGH_PCT",
+    "label": "Min pullback from 24h high %",
+    "group": "Entry firewall",
+    "input_type": "number",
+    "help": "Requires price to be below the 24h high by this percentage.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "ENTRY_MAX_3C_MOVE_PCT",
+    "label": "Max 3-candle move %",
+    "group": "Entry firewall",
+    "input_type": "number",
+    "help": "Blocks short-term vertical candles.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "ENTRY_MAX_6C_MOVE_PCT",
+    "label": "Max 6-candle move %",
+    "group": "Entry firewall",
+    "input_type": "number",
+    "help": "Blocks larger short-term extensions.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "ENTRY_MAX_RSI",
+    "label": "Max RSI",
+    "group": "Entry firewall",
+    "input_type": "number",
+    "help": "Rejects hot entries above this RSI.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "ENTRY_MAX_SPREAD_PCT",
+    "label": "Max spread %",
+    "group": "Entry firewall",
+    "input_type": "number",
+    "help": "Rejects entries with too much bid/ask spread.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "ENTRY_PROFIT_EDGE_GUARD_ENABLED",
+    "label": "Profit-edge guard",
+    "group": "Entry firewall",
+    "input_type": "boolean",
+    "help": "Requires enough visible upside to pay round-trip fees and profit target.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "ENTRY_EDGE_BUFFER_PCT",
+    "label": "Extra edge buffer %",
+    "group": "Entry firewall",
+    "input_type": "number",
+    "help": "Extra upside buffer before allowing a buy.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "ENTRY_SPIKE_LOOKBACK_CANDLES",
+    "label": "Spike lookback candles",
+    "group": "Entry firewall",
+    "input_type": "integer",
+    "help": "Number of recent candles used to detect spike-chasing.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "ENTRY_BLOCK_AFTER_SPIKE_CANDLES",
+    "label": "Block after spike candles",
+    "group": "Entry firewall",
+    "input_type": "integer",
+    "help": "How many candles after a spike remain protected.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "ENTRY_SPIKE_MOVE_PCT",
+    "label": "Spike move %",
+    "group": "Entry firewall",
+    "input_type": "number",
+    "help": "Move size considered a spike.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "ENTRY_SPIKE_MIN_PULLBACK_PCT",
+    "label": "Required spike pullback %",
+    "group": "Entry firewall",
+    "input_type": "number",
+    "help": "Minimum pullback after a spike before entry.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "ENTRY_MIN_REBOUND_CONFIRMATION_PCT",
+    "label": "Min rebound confirmation %",
+    "group": "Entry firewall",
+    "input_type": "number",
+    "help": "Minimum rebound from pullback low before buying.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "LIVE_FEE_FLOOR_PCT",
+    "label": "Live fee floor %",
+    "group": "Fees / basis",
+    "input_type": "number",
+    "help": "Conservative fee floor used if pair/trade data is missing.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "LIVE_BUY_FEE_FLOOR_PCT",
+    "label": "Live buy fee floor %",
+    "group": "Fees / basis",
+    "input_type": "number",
+    "help": "Buy-side floor. Blank can fall back to live fee floor.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "LIVE_SELL_FEE_FLOOR_PCT",
+    "label": "Live sell fee floor %",
+    "group": "Fees / basis",
+    "input_type": "number",
+    "help": "Sell-side floor. Blank can fall back to live fee floor.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "SLIPPAGE_RATE",
+    "label": "Slippage rate",
+    "group": "Fees / basis",
+    "input_type": "number",
+    "help": "Decimal rate, for example 0.001 means 0.1%.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "DEFAULT_TRADING_PAIR",
+    "label": "Default trading pair",
+    "group": "Market universe",
+    "input_type": "text",
+    "help": "Dashboard default pair.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "DEFAULT_TIMEFRAME",
+    "label": "Default timeframe",
+    "group": "Market universe",
+    "input_type": "text",
+    "help": "Example: 1m, 5m, 15m, 1h.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "BOT_SCAN_INTERVAL_SECONDS",
+    "label": "Scan interval seconds",
+    "group": "Market universe",
+    "input_type": "integer",
+    "help": "Bot loop scan interval. Minimum is 5 seconds.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "USE_ALL_KRAKEN_PAIRS",
+    "label": "Use all Kraken pairs",
+    "group": "Market universe",
+    "input_type": "boolean",
+    "help": "ON scans/shortlists from Kraken universe; OFF uses TRADING_PAIRS.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "TRADING_PAIRS",
+    "label": "Configured trading pairs",
+    "group": "Market universe",
+    "input_type": "textarea",
+    "help": "Comma-separated list used when all-pairs mode is OFF.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "ALLOWED_QUOTE_CURRENCIES",
+    "label": "Allowed quote currencies",
+    "group": "Market universe",
+    "input_type": "text",
+    "help": "Comma-separated, for example USD,AUD.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "EXCLUDED_PAIRS",
+    "label": "Excluded pairs",
+    "group": "Market universe",
+    "input_type": "textarea",
+    "help": "Comma-separated pairs blocked from scans.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "MAX_PAIRS_PER_CYCLE",
+    "label": "Max pairs per cycle",
+    "group": "Market universe",
+    "input_type": "integer",
+    "help": "0 means no explicit cap after shortlist logic.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "PAIR_REFRESH_MINUTES",
+    "label": "Pair refresh minutes",
+    "group": "Market universe",
+    "input_type": "integer",
+    "help": "How often to refresh Kraken pair universe.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "OWNER_LOCAL_BYPASS",
+    "label": "Owner local bypass",
+    "group": "Owner / licensing",
+    "input_type": "boolean",
+    "help": "Your own running copy should usually keep this ON.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "LICENSE_GATE_REQUIRED",
+    "label": "Require license gate",
+    "group": "Owner / licensing",
+    "input_type": "boolean",
+    "help": "Customer builds should use this; owner local can keep it off.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "KRAKEN_AFFILIATE_REQUIRED",
+    "label": "Require Kraken affiliate acknowledgement",
+    "group": "Owner / licensing",
+    "input_type": "boolean",
+    "help": "Customer mode: user must acknowledge your affiliate code or use subscription.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "KRAKEN_AFFILIATE_LINK",
+    "label": "Kraken affiliate link",
+    "group": "Owner / licensing",
+    "input_type": "text",
+    "help": "Your public affiliate/referral link.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "KRAKEN_AFFILIATE_CODE",
+    "label": "Kraken affiliate code",
+    "group": "Owner / licensing",
+    "input_type": "text",
+    "help": "Your affiliate/referral code.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "KRAKEN_AFFILIATE_USER_ACK",
+    "label": "User affiliate acknowledgement",
+    "group": "Owner / licensing",
+    "input_type": "text",
+    "help": "Expected customer acknowledgement string.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "LICENSE_KEY",
+    "label": "License key",
+    "group": "Owner / licensing",
+    "input_type": "secret",
+    "help": "Optional monthly subscription/license key. Blank keeps existing.",
+    "placeholder": "",
+    "sensitive": true,
+    "restart_required": false
+  },
+  {
+    "key": "LICENSE_SERVER_URL",
+    "label": "License server URL",
+    "group": "Owner / licensing",
+    "input_type": "text",
+    "help": "Optional license verification endpoint.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "MONTHLY_FEE_URL",
+    "label": "Monthly fee URL",
+    "group": "Owner / licensing",
+    "input_type": "text",
+    "help": "Stripe/payment link shown to customers.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "STRIPE_CUSTOMER_PORTAL_URL",
+    "label": "Customer portal URL",
+    "group": "Owner / licensing",
+    "input_type": "text",
+    "help": "Optional customer billing portal.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "APP_UPDATE_REPO",
+    "label": "GitHub update repo",
+    "group": "Updates",
+    "input_type": "text",
+    "help": "Format: owner/repo.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "APP_UPDATE_ASSET_PATTERN",
+    "label": "GitHub asset pattern",
+    "group": "Updates",
+    "input_type": "text",
+    "help": "Example: jj_ozzy_crypto_bot*.zip.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  },
+  {
+    "key": "APP_UPDATE_CHANNEL",
+    "label": "Update channel",
+    "group": "Updates",
+    "input_type": "text",
+    "help": "Example: stable, beta, owner.",
+    "placeholder": "",
+    "sensitive": false,
+    "restart_required": false
+  }
+];
+
+
+function settingsInputHtml(item, current) {
+  const key = item.key;
+  const value = current?.value ?? '';
+  const placeholder = item.placeholder || '';
+  const inputLabel = item.input_type === 'secret' ? 'New value' : 'Value';
+  const common = `data-setting-key="${escapeHtml(key)}" data-setting-type="${escapeHtml(item.input_type)}" onchange="markSettingsDirty()" oninput="markSettingsDirty()"`;
+  let control = '';
+  if (item.input_type === 'boolean') {
+    const checked = String(value || '').toLowerCase() === 'true' || String(value || '').toLowerCase() === '1' || String(value || '').toLowerCase() === 'yes' || String(value || '').toLowerCase() === 'on';
+    control = `<select ${common}>
+      <option value="true" ${checked ? 'selected' : ''}>true / ON</option>
+      <option value="false" ${!checked ? 'selected' : ''}>false / OFF</option>
+    </select>`;
+  } else if (item.input_type === 'textarea') {
+    control = `<textarea ${common} placeholder="${escapeHtml(placeholder)}">${escapeHtml(value)}</textarea>`;
+  } else if (item.input_type === 'secret') {
+    const status = current?.is_set ? `Saved: ${escapeHtml(current.masked || 'set')}` : 'Not saved yet';
+    control = `<input ${common} type="password" autocomplete="off" value="" placeholder="${escapeHtml(placeholder || 'leave blank to keep saved value')}"><div class="settings-secret-status">${status}</div>`;
+  } else {
+    const type = item.input_type === 'integer' || item.input_type === 'number' ? 'number' : 'text';
+    const step = item.input_type === 'integer' ? '1' : item.input_type === 'number' ? 'any' : '';
+    control = `<input ${common} type="${type}" ${step ? `step="${step}"` : ''} value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder)}">`;
+  }
+  return `
+    <div class="settings-meta">
+      <div class="settings-key">${escapeHtml(key)}</div>
+      <div class="settings-label">${escapeHtml(item.label)}</div>
+      <div class="settings-description">${escapeHtml(item.help || 'Editable bot variable. Change the value, then press Apply Settings to save it to .env.')}</div>
+      <div class="settings-type-row">
+        <span class="settings-pill">${escapeHtml(item.input_type)}</span>
+        ${item.restart_required ? '<span class="settings-pill">restart may be needed</span>' : '<span class="settings-pill">runtime where supported</span>'}
+        ${item.sensitive ? '<span class="settings-pill">secret</span>' : ''}
+      </div>
+    </div>
+    <div class="settings-control">
+      <label>${escapeHtml(inputLabel)}</label>
+      ${control}
+    </div>`;
+}
+
+function updateSettingsCount() {
+  const count = document.getElementById('settings-count');
+  if (!count) return;
+  const total = document.querySelectorAll('.settings-field').length;
+  const visible = document.querySelectorAll('.settings-field:not(.is-hidden)').length;
+  count.textContent = total ? `${visible} / ${total} variables shown` : 'No variables loaded';
+}
+
+function filterSettingsVariables() {
+  const input = document.getElementById('settings-search');
+  const needle = (input?.value || '').trim().toLowerCase();
+  document.querySelectorAll('.settings-field').forEach(field => {
+    const haystack = (field.dataset.searchText || field.textContent || '').toLowerCase();
+    field.classList.toggle('is-hidden', Boolean(needle) && !haystack.includes(needle));
+  });
+  document.querySelectorAll('.settings-group').forEach(group => {
+    const visible = group.querySelectorAll('.settings-field:not(.is-hidden)').length;
+    group.classList.toggle('is-hidden', visible === 0);
+  });
+  updateSettingsCount();
+}
+
+function valuesFromConfigSummary(summary, schema) {
+  const result = {};
+  const source = summary && typeof summary === 'object' ? summary : {};
+  (schema || []).forEach(item => {
+    const snake = String(item.key || '').toLowerCase();
+    let raw = source[snake];
+    if (raw === undefined && snake === 'kraken_api_key') raw = source.kraken_api_key_set ? 'saved' : '';
+    if (raw === undefined && snake === 'kraken_api_secret') raw = source.kraken_api_secret_set ? 'saved' : '';
+    if (raw === undefined) raw = '';
+    const isSecret = item.input_type === 'secret' || item.sensitive;
+    result[item.key] = {
+      value: isSecret ? '' : String(raw ?? ''),
+      is_set: isSecret ? Boolean(raw) : String(raw ?? '').length > 0,
+      masked: isSecret && raw ? 'saved' : ''
+    };
+  });
+  return result;
+}
+
+function renderSettingsEditorPayload(data, fallbackMode = false) {
+  const schema = Array.isArray(data?.schema) && data.schema.length
+    ? data.schema
+    : DEFAULT_EDITABLE_SETTINGS;
+  editableSettingsSchema = schema;
+  const values = data?.values || {};
+  const groups = {};
+  editableSettingsSchema.forEach(item => {
+    groups[item.group] = groups[item.group] || [];
+    groups[item.group].push(item);
+  });
+  const body = document.getElementById('settings-form-body');
+  if (!body) return;
+  body.innerHTML = Object.entries(groups).map(([group, items]) => `
+    <section class="settings-group">
+      <h3>${escapeHtml(group)}</h3>
+      <div class="settings-list">
+        ${items.map(item => {
+          const searchText = `${item.key} ${item.label || ''} ${item.group || ''} ${item.help || ''}`;
+          return `<div class="settings-field" data-search-text="${escapeHtml(searchText)}">${settingsInputHtml(item, values[item.key])}</div>`;
+        }).join('')}
+      </div>
+    </section>
+  `).join('');
+  settingsEditorLoaded = true;
+  filterSettingsVariables();
+  const status = document.getElementById('settings-save-status');
+  if (status) {
+    status.textContent = fallbackMode
+      ? 'Settings list loaded from built-in fallback. Apply will work once /config/update is available from the patched backend.'
+      : 'Settings loaded. Change values then press Apply Settings.';
+    status.classList.toggle('settings-dirty', Boolean(fallbackMode));
+  }
+}
+
+async function loadSettingsEditor() {
+  const body = document.getElementById('settings-form-body');
+  const count = document.getElementById('settings-count');
+  if (body && !settingsEditorLoaded) body.innerHTML = 'Loading editable settings...';
+  if (count) count.textContent = 'Loading variables...';
+  try {
+    const data = await fetchJson('/config/editable');
+    renderSettingsEditorPayload(data, false);
+  } catch (err) {
+    console.error('Settings editor endpoint failed', err);
+    let summary = {};
+    try { summary = await fetchJson('/config/summary'); } catch {}
+    renderSettingsEditorPayload({
+      schema: DEFAULT_EDITABLE_SETTINGS,
+      values: valuesFromConfigSummary(summary, DEFAULT_EDITABLE_SETTINGS)
+    }, true);
+    setStatus('Settings endpoint did not respond, so the variable list was shown from the built-in fallback. Restart the bot after installing the full patch if Apply fails.', true);
+  }
+}
+
+function markSettingsDirty() {
+  const status = document.getElementById('settings-save-status');
+  if (status) {
+    status.textContent = 'Unsaved changes — press Apply Settings to save to .env and update the running bot.';
+    status.classList.add('settings-dirty');
+  }
+}
+
+function collectSettingsFormValues() {
+  const values = {};
+  document.querySelectorAll('[data-setting-key]').forEach(input => {
+    const key = input.dataset.settingKey;
+    if (!key) return;
+    values[key] = input.value;
+  });
+  return values;
+}
+
+async function submitSettingsForm() {
+  const status = document.getElementById('settings-save-status');
+  if (status) {
+    status.textContent = 'Saving settings...';
+    status.classList.remove('settings-dirty');
+  }
+  try {
+    const data = await fetchJson('/config/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values: collectSettingsFormValues() })
+    });
+    setJson('config-box', data);
+    await loadSettingsEditor();
+    try { await loadConnectionStatus(); } catch (e) {}
+    try { await loadAccount(); } catch (e) {}
+    await loadProductionReadiness();
+    await loadLicenseStatus();
+    await loadBotStatus();
+    const apiNote = data?.api_configured ? ' Kraken API is now detected.' : ' Kraken API is still missing; check the env_path shown in Config.';
+    const saveMsg = (data.message || 'Settings saved and applied.') + apiNote;
+    if (status) {
+      status.textContent = saveMsg;
+      status.classList.remove('settings-dirty');
+    }
+    setStatus(saveMsg, !data?.ok);
+  } catch (err) {
+    const msg = `Settings save failed: ${err.message || err}`;
+    if (status) {
+      status.textContent = msg;
+      status.classList.add('settings-dirty');
+    }
+    setJson('config-box', { status: 'error', detail: String(err.message || err) });
+    setStatus(msg, true);
+    alert(msg);
+    throw err;
+  }
+}
+
+function setLiveModeUi(isLive) {
+  document.getElementById('positions-head-paper').classList.toggle('hidden', isLive);
+  document.getElementById('positions-head-live').classList.toggle('hidden', !isLive);
+  document.getElementById('paper-trades-wrap').classList.toggle('hidden', isLive);
+  document.getElementById('live-open-orders-wrap').classList.toggle('hidden', !isLive);
+  document.getElementById('live-trade-balance-wrap').classList.toggle('hidden', !isLive);
+  const activityTitle = document.getElementById('activity-title');
+  if (activityTitle) {
+    activityTitle.textContent = isLive ? 'Live Open Orders' : 'Recent Paper Trades';
+  }
+  document.getElementById('account-title').textContent = isLive ? 'Live Account Overview' : 'Account Overview';
+  document.getElementById('account-note').textContent = isLive
+    ? 'Live mode shows Kraken balances, held amounts, and open orders. Paper history is hidden while live mode is active.'
+    : 'Paper trading uses live Kraken market data for prices and candles. Live Kraken balances can still be shown separately as reference.';
+  document.getElementById('kpi-trade-label').textContent = isLive ? 'Open Orders' : 'Trade Count';
+  document.getElementById('kpi-cash-label').textContent = isLive ? 'Cash / Free' : 'Cash';
+  document.getElementById('kpi-equity-label').textContent = isLive ? 'Portfolio Total' : 'Total Equity';
+  document.getElementById('kpi-assets-label').textContent = isLive ? 'Total Assets Value' : 'Assets Value';
+  document.getElementById('market-title').textContent = 'Guarded Market Snapshot';
+  document.getElementById('market-note').textContent = 'This section always uses live Kraken ticker and candle data for the selected market.';
+}
+
+async function loadAccount() {
+  const data = await fetchJson('/account/overview');
+  renderAccountWarnings(data);
+  const isLive = String(data.mode || '').toLowerCase() === 'live';
+  setLiveModeUi(isLive);
+
+  const modeValue = (data.mode || '-').toUpperCase();
+  document.getElementById('kpi-mode').textContent = modeValue;
+  setText('kpi-mode-strip', modeValue);
+
+  const body = document.getElementById('positions-body');
+
+  if (isLive) {
+    const rawBalances = Array.isArray(data.live_balances) ? data.live_balances : [];
+    const balances = sortLiveBalances(rawBalances.filter(meaningfulLiveBalance));
+    const openOrders = Array.isArray(data.live_open_orders) ? data.live_open_orders : [];
+    const tradeBalance = data.live_trade_balance || {};
+
+    document.getElementById('kpi-cash').textContent = getLiveCashDisplay(data, balances);
+    document.getElementById('kpi-equity').textContent = getLiveEquityDisplay(data);
+    document.getElementById('kpi-assets-total').textContent = getLiveAssetsTotal(data);
+    document.getElementById('kpi-trades').textContent = String(openOrders.length);
+
+    body.innerHTML = balances.length
+      ? balances.map(b => `
+        <tr>
+          <td class="mono">${b.asset ?? '-'}</td>
+          <td>${formatNumber(b.available, 8)}</td>
+          <td>${formatNumber(b.balance, 8)}</td>
+          <td>${formatNumber(b.hold_trade, 8)}</td>
+          <td>${formatNumber(b.credit, 8)}</td>
+          <td>${formatNumber(b.credit_used, 8)}</td>
+        </tr>
+      `).join('')
+      : `<tr><td colspan="6">${data.live_balance_error ? `Live balance error: ${data.live_balance_error}` : 'No meaningful live balances returned.'}</td></tr>`;
+
+    setJson(
+      'live-trade-balance-box',
+      Object.keys(tradeBalance).length ? tradeBalance : (data.live_trade_balance_error || 'No live trade balance returned.')
+    );
+
+    const openOrdersBody = document.getElementById('live-open-orders-body');
+    if (openOrders.length) {
+      openOrdersBody.innerHTML = openOrders.map(o => `
+        <tr>
+          <td class="mono">${o.order_id ?? '-'}</td>
+          <td class="mono">${o.pair ?? '-'}</td>
+          <td>${o.type ?? '-'}</td>
+          <td>${o.ordertype ?? '-'}</td>
+          <td>${o.price ?? '-'}</td>
+          <td>${o.volume ?? '-'}</td>
+          <td>${o.volume_exec ?? '-'}</td>
+          <td>${o.status ?? '-'}</td>
+        </tr>
+      `).join('');
+    } else if (latestOpenOrderActions.length) {
+      renderReviewedOpenOrders(latestOpenOrderActions);
+    } else {
+      openOrdersBody.innerHTML = `<tr><td colspan="8">${data.live_open_orders_error ? `Live open orders error: ${data.live_open_orders_error}` : 'No live open orders returned.'}</td></tr>`;
+    }
+
+    return;
+  }
+
+  document.getElementById('kpi-cash').textContent = data.cash ?? '-';
+  document.getElementById('kpi-equity').textContent = data.total_equity ?? '-';
+  document.getElementById('kpi-assets-total').textContent = data.total_equity ?? '-';
+  document.getElementById('kpi-trades').textContent = String(data.trade_count ?? 0);
+
+  const items = Array.isArray(data.positions) ? data.positions : [];
+  body.innerHTML = items.length
+    ? items.map(p => {
+        const qty = Number(p.quantity ?? 0);
+        const avg = Number(p.average_price ?? 0);
+        const market = Number(p.market_price ?? 0);
+        const value = qty * market;
+        const pnl = (market - avg) * qty;
+        const pnlClass = pnl > 0 ? 'asset-positive' : (pnl < 0 ? 'asset-negative' : 'asset-neutral');
+
+        return `
+          <tr>
+            <td class="mono">${p.symbol ?? '-'}</td>
+            <td>${formatNumber(qty, 8)}</td>
+            <td>${formatNumber(avg, 8)}</td>
+            <td>${formatNumber(market, 8)}</td>
+            <td>${formatNumber(value, 2)}</td>
+            <td class="${pnlClass}">${formatNumber(pnl, 2)}</td>
+          </tr>
+        `;
+      }).join('')
+      : `<tr><td colspan="6">No open positions.</td></tr>`;
+}
+
+async function loadTicker() {
+  const rawSymbol = currentMarketSymbol();
+  const symbol = encodeURIComponent(rawSymbol);
+  let d;
+  try {
+    d = await fetchJson(`/market/ticker?symbol=${symbol}`);
+    setMarketDataWarning('', false);
+  } catch (err) {
+    setMarketDataWarning(`Ticker failed for ${rawSymbol}: ${err.message || err}`, true);
+    throw err;
+  }
+  setText('ticker-bid', d.bid);
+  setText('ticker-ask', d.ask);
+  setText('ticker-last', d.last);
+  setText('ticker-volume', d.volume ?? '-');
+  setText('ticker-last-strip', d.last ?? '-');
+  setText('ticker-volume-strip', d.volume ?? '-');
+  setText('ticker-bid-chip', d.bid ?? '-');
+  setText('ticker-ask-chip', d.ask ?? '-');
+  setText('ticker-last-chip', d.last ?? '-');
+  setText('strip-market-symbol', rawSymbol || '-');
+  setText('market-title', `${rawSymbol} Guarded Market Snapshot`);
+}
+
+async function loadOHLCV() {
+  const symbol = encodeURIComponent(currentMarketSymbol());
+  const timeframe = encodeURIComponent(document.getElementById('market-timeframe').value.trim());
+  const limit = encodeURIComponent(document.getElementById('market-limit').value.trim());
+  let data;
+  try {
+    data = await fetchJson(`/market/ohlcv?symbol=${symbol}&timeframe=${timeframe}&limit=${limit}`);
+    setMarketDataWarning('', false);
+  } catch (err) {
+    setMarketDataWarning(`Candles failed for ${decodeURIComponent(symbol)}: ${err.message || err}`, true);
+    throw err;
+  }
+  latestCandles = Array.isArray(data) ? data : [];
+  const body = document.getElementById('ohlcv-body');
+  body.innerHTML = latestCandles.length
+    ? latestCandles.map(c => `<tr><td class="mono">${escapeHtml(c.timestamp)}</td><td>${escapeHtml(c.open)}</td><td>${escapeHtml(c.high)}</td><td>${escapeHtml(c.low)}</td><td>${escapeHtml(c.close)}</td><td>${escapeHtml(c.volume)}</td></tr>`).join('')
+    : `<tr><td colspan="6">No candle data returned.</td></tr>`;
+  drawCandleChart(latestCandles);
+}
+
+async function loadMarket() {
+  await loadTicker();
+  await loadOHLCV();
+  if (currentMarketPane === 'depth') await loadDepth();
+  if (currentMarketPane === 'trades') await loadRecentTrades();
+  if (currentMarketPane === 'orders') await loadTrades();
+  setText('market-timeframe-display', document.getElementById('market-timeframe').value);
+  setStatus('Live market data refreshed.');
+}
+
+async function loadTrades() {
+  const data = await fetchJson('/account/overview');
+  const isLive = String(data.mode || '').toLowerCase() === 'live';
+  setLiveModeUi(isLive);
+
+  if (isLive) {
+    const openOrders = Array.isArray(data.live_open_orders) ? data.live_open_orders : [];
+    const openOrdersBody = document.getElementById('live-open-orders-body');
+    renderMarketOrders(openOrders, data.live_open_orders_error ? `Live open orders error: ${data.live_open_orders_error}` : 'No live open orders returned.');
+    if (openOrders.length) {
+      openOrdersBody.innerHTML = openOrders.map(o => `
+        <tr>
+          <td class="mono">${escapeHtml(o.order_id ?? '-')}</td>
+          <td class="mono">${escapeHtml(o.pair ?? '-')}</td>
+          <td>${escapeHtml(o.type ?? '-')}</td>
+          <td>${escapeHtml(o.ordertype ?? '-')}</td>
+          <td>${escapeHtml(o.price ?? '-')}</td>
+          <td>${escapeHtml(o.volume ?? '-')}</td>
+          <td>${escapeHtml(o.volume_exec ?? '-')}</td>
+          <td>${escapeHtml(o.status ?? '-')}</td>
+        </tr>
+      `).join('');
+    } else if (latestOpenOrderActions.length) {
+      renderReviewedOpenOrders(latestOpenOrderActions);
+    } else {
+      openOrdersBody.innerHTML = `<tr><td colspan="8">${data.live_open_orders_error ? `Live open orders error: ${escapeHtml(data.live_open_orders_error)}` : 'No live open orders returned.'}</td></tr>`;
+    }
+    return;
+  }
+
+  const trades = await fetchJson('/paper/trades');
+  const body = document.getElementById('trades-body');
+  body.innerHTML = Array.isArray(trades) && trades.length
+    ? trades.map(t => `<tr><td>${t.id ?? '-'}</td><td class="mono">${t.symbol}</td><td>${t.side}</td><td>${t.amount}</td><td>${t.price}</td><td>${t.fee}</td><td>${t.status}</td><td class="mono">${t.created_at}</td></tr>`).join('')
+    : `<tr><td colspan="8">No paper trades yet.</td></tr>`;
+}
+
+
+async function loadProductionReadiness() {
+  const summary = document.getElementById('production-readiness-summary');
+  try {
+    const data = await fetchJson('/production/readiness');
+    setJson('production-readiness-box', data);
+    if (summary) {
+      const status = String(data?.status || 'unknown').toUpperCase();
+      summary.textContent = `Production readiness: ${status} | PASS ${data?.pass_count ?? 0} | WARN ${data?.warn_count ?? 0} | FAIL ${data?.fail_count ?? 0}`;
+      summary.style.borderColor = data?.status === 'pass' ? 'rgba(34,197,94,.55)' : data?.status === 'warn' ? 'rgba(245,158,11,.55)' : 'rgba(239,68,68,.55)';
+    }
+    return data;
+  } catch (err) {
+    if (summary) summary.textContent = `Production readiness: unavailable (${err.message})`;
+    setJson('production-readiness-box', { error: err.message });
+    return null;
+  }
+}
+
+async function loadLicenseStatus() {
+  const summary = document.getElementById('license-status-summary');
+  try {
+    const data = await fetchJson('/license/status');
+    setJson('license-status-box', data);
+    if (summary) {
+      const status = String(data?.status || 'unknown').toUpperCase();
+      const entitlement = data?.entitlement ? ` | ${data.entitlement}` : '';
+      summary.textContent = `License: ${status}${entitlement} | ${data?.reason || '-'}`;
+      summary.style.borderColor = data?.allowed ? 'rgba(34,197,94,.55)' : 'rgba(239,68,68,.55)';
+    }
+    return data;
+  } catch (err) {
+    if (summary) summary.textContent = `License: unavailable (${err.message})`;
+    setJson('license-status-box', { error: err.message });
+    return null;
+  }
+}
+
+async function loadBotStatus() {
+  const data = await fetchJson('/bot/status');
+  latestBotStatus = data;
+  const runningEl = document.getElementById('runtime-running');
+  const desiredEl = document.getElementById('runtime-desired');
+  const stopEl = document.getElementById('runtime-stop-reason');
+  if (runningEl) {
+    runningEl.textContent = data?.running ? 'RUNNING' : 'STOPPED';
+    runningEl.className = `runtime-value ${data?.running ? 'ok' : 'bad'}`;
+  }
+  if (desiredEl) {
+    desiredEl.textContent = data?.desired_running ? 'ARMED' : 'OFF';
+    desiredEl.className = `runtime-value ${data?.desired_running ? 'ok' : 'warn'}`;
+  }
+  if (stopEl) {
+    stopEl.textContent = data?.last_stop_reason || '-';
+    stopEl.className = `runtime-value ${data?.last_stop_reason ? 'warn' : 'ok'}`;
+  }
+  setJson('bot-status-box', data);
+  const botDecisions = Array.isArray(data?.decisions) ? data.decisions.slice(-10).reverse() : [];
+  latestUnifiedDecisions = botDecisions;
+  latestDecisionMap = {};
+  latestUnifiedDecisions.forEach(d => { if (d && d.symbol) latestDecisionMap[String(d.symbol).toUpperCase()] = d; });
+  renderDecisionRows(latestUnifiedDecisions);
+  try { await loadNoTradeReasons(); } catch (e) { console.warn('No-trade reason feed unavailable', e); }
+  try { await loadProductionReadiness(); } catch (e) { console.warn('Production readiness unavailable', e); }
+  try { await loadLicenseStatus(); } catch (e) { console.warn('License status unavailable', e); }
+  try { await loadSellSafety(); } catch (e) { console.warn('Sell safety feed unavailable', e); }
+}
+
+async function startBot() {
+  await fetchJson('/bot/start', { method: 'POST' });
+  await loadBotStatus();
+  await loadDecisionFeedIntel();
+  setStatus('Bot started.');
+}
+
+async function stopBot() {
+  await fetchJson('/bot/stop', { method: 'POST' });
+  await loadBotStatus();
+  await loadDecisionFeedIntel();
+  setStatus('Bot stopped.');
+}
+
+async function runBotOnce() {
+  await fetchJson('/bot/run-once', { method: 'POST' });
+  await loadBotStatus();
+  await loadAccount();
+  await loadTrades();
+  await loadDecisionFeedIntel();
+  setStatus('Bot cycle completed.');
+}
+
+async function setMode(mode) {
+  try {
+    await fetchJson(`/bot/mode?mode=${encodeURIComponent(mode)}`, { method: 'POST' });
+    await loadBotStatus();
+    await loadAccount();
+    await loadTrades();
+    await loadDecisionFeedIntel();
+    setStatus(`Mode set to ${mode}.`);
+  } catch (err) {
+    let detail = err && err.message ? err.message : String(err);
+    try {
+      const liveDebug = await fetchJson('/customer/live-mode-debug');
+      const blockers = Array.isArray(liveDebug.blocking_reasons) ? liveDebug.blocking_reasons.join(' | ') : '';
+      detail = blockers || detail;
+      setJson('production-ready-box', liveDebug);
+    } catch (e) {}
+    alert(`Live mode blocked: ${detail}`);
+    setStatus(`Live mode blocked: ${detail}`, true);
+    throw err;
+  }
+}
+
+async function refreshPairs() {
+  const d = await fetchJson('/bot/refresh-pairs', { method: 'POST' });
+  await loadBotStatus();
+  setStatus(`Pairs refreshed: ${d.pair_count}.`);
+}
+
+async function submitOrder(mode) {
+  const payload = {
+    symbol: document.getElementById('order-symbol').value.trim(),
+    side: document.getElementById('order-side').value.trim(),
+    amount: document.getElementById('order-amount').value.trim(),
+    order_type: document.getElementById('order-type').value.trim(),
+    limit_price: document.getElementById('order-type').value.trim() === 'limit'
+      ? (document.getElementById('order-limit-price').value.trim() || null)
+      : null,
+    strategy: document.getElementById('order-strategy').value.trim() || null,
+    notes: document.getElementById('order-notes').value.trim() || null
+  };
+
+  const data = await fetchJson(`/trade/order?mode=${encodeURIComponent(mode)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  setJson('order-result-box', data);
+  await loadAccount();
+  await loadTrades();
+  await loadBotStatus();
+  setStatus(`${mode.toUpperCase()} order submitted.`);
+}
+
+async function refreshAll() {
+  const tasks = [loadCustomerRuntimeOverview(), loadConnectionStatus(), loadConfig(), loadSettingsEditor(), loadAccount(), loadMarket(), loadTrades(), loadBotStatus(), loadWorkspaceIntel(), loadSellSafety(), loadProductionReadiness(), loadLicenseStatus()];
+  const results = await Promise.allSettled(tasks);
+  results.forEach(r => { if (r.status === 'rejected') console.error(r.reason); });
+  try { await loadDecisionFeedIntel(); } catch (err) { console.error(err); }
+  setStatus(results.some(r => r.status === 'rejected') ? 'Dashboard refreshed with one or more panel warnings.' : 'Dashboard refreshed.', results.some(r => r.status === 'rejected'));
+}
+
+async function refreshLiveBotPanels() {
+  await loadCustomerRuntimeOverview();
+  await loadConnectionStatus();
+  await loadBotStatus();
+  await loadSellSafety();
+  await loadProductionReadiness();
+  await loadLicenseStatus();
+}
+
+window.addEventListener('resize', () => drawCandleChart());
+setupDashboardPages();
+toggleLimitPrice();
+loadCustomerApprovalFields();
+safeAction(refreshAll);
+window.setInterval(() => safeAction(refreshLiveBotPanels), 15000);
+</script>
+
+<script id="jjozzy-live-arm-helper-20260521">
+(function(){
+  if(window.__jjozzyLiveArmHelper)return; window.__jjozzyLiveArmHelper=true;
+  function addButton(){
+    const box=document.getElementById('jjozzy-security-hardening-banner-box');
+    if(!box || document.getElementById('jjozzy-arm-live-settings-btn')) return;
+    const wrap=document.createElement('div');
+    wrap.style.cssText='margin-top:10px;display:flex;gap:8px;flex-wrap:wrap';
+    const btn=document.createElement('button');
+    btn.id='jjozzy-arm-live-settings-btn';
+    btn.type='button';
+    btn.textContent='Set withdrawal ACK + enable live';
+    btn.style.cssText='border:0;border-radius:10px;background:#f2a43a;color:#120b05;font-weight:900;padding:8px 10px;cursor:pointer';
+    btn.onclick=async()=>{
+      if(!confirm('Confirm the Kraken API key has NO withdrawal permission, and enable live profile. This does not approve the customer and does not place an order.')) return;
+      try{
+        const r=await fetch('/customer/live-readiness-apply',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({withdrawals_disabled_ack:true,live_trading_enabled:true,turn_dry_run_off:true})});
+        const d=await r.json();
+        alert((d&&d.message)||'Live safety settings saved.');
+        location.reload();
+      }catch(e){alert('Could not save live safety settings: '+(e&&e.message?e.message:e));}
+    };
+    wrap.appendChild(btn);
+    const btn2=document.createElement('button');
+    btn2.type='button';
+    btn2.textContent='Check approval now';
+    btn2.style.cssText='border:1px solid #f2a43a;border-radius:10px;background:#1a120a;color:#ffd39b;font-weight:800;padding:8px 10px;cursor:pointer';
+    btn2.onclick=async()=>{try{const r=await fetch('/customer/approval-status',{credentials:'same-origin',cache:'no-store'});const d=await r.json();alert(JSON.stringify(d,null,2)); location.reload();}catch(e){alert('Approval check failed: '+(e&&e.message?e.message:e));}};
+    wrap.appendChild(btn2);
+    box.appendChild(wrap);
+  }
+  setInterval(addButton,1000);
+})();
+</script>
+</body>
+</html>

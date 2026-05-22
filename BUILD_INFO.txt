@@ -1,0 +1,6 @@
+﻿Build=JJOzzyCryptoBot_CUSTOMER_LOCKED_20260522_153909
+BuiltAt=2026-05-22T15:39:10.3329449+10:00
+SourceRoot=C:\Users\Miner-1\Downloads\CUSTOMER_LOCKED_SOURCE
+ExeBytes=93421568
+RuntimeUrl=http://127.0.0.1:8000
+IncludesTemplate=app\templates\dashboard.html
